@@ -14,7 +14,12 @@ monitoring software, such as GCP.
 
 ### Installation commands
 ```bash
-> pip3 install -r requirements.txt
+pip3 install -r requirements.txt
+```
+
+## Running
+```bash
+python3 ./ldap_metrics.py ./ldap_metrics.yml
 ```
 
 ## Configuration
