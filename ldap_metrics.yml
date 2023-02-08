@@ -1,0 +1,322 @@
+ldapServers:
+  - database: localhost
+    connection:
+      # Connection details for the Bitnami OpenLDAP docker image
+      serverUri: ldap://localhost:1389/
+      userDn: CN=admin,DC=example,DC=org
+      userPassword: adminpassword
+      startTls: false
+      timeout: 5
+    chosenStatistics:
+      - current_conections
+      - search_operations
+  - database: forumsys
+    connection:
+      serverUri: ldap://ldap.forumsys.com
+      userDn: cn=read-only-admin,dc=example,dc=com
+      userPassword: password
+      startTls: false
+      timeout: -1
+exporters:
+  -
+    name: Prometheus
+    options:
+      namespace: openldap
+      port: 8000
+      address: 0.0.0.0
+  -
+    name: Stackdriver
+    options:
+logConfig:
+  root:
+    level: DEBUG
+    handlers:
+      - stderr
+      - syslog
+  handlers:
+    stderr:
+      class: logging.StreamHandler
+      level: DEBUG
+    syslog:
+      class: logging.handlers.SysLogHandler
+      level: WARNING
+statistics:
+- aggregator: LastValue
+  attribute: monitorCounter
+  description: connections_max_file_descriptors
+  dn: cn=Max File Descriptors,cn=Connections,cn=Monitor
+  name: connections_max_file_descriptors
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorCounter
+  description: connections_total
+  dn: cn=Total,cn=Connections,cn=Monitor
+  name: connections_total
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorCounter
+  description: connections_current
+  dn: cn=Current,cn=Connections,cn=Monitor
+  name: connections_current
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_initiated
+  dn: cn=Operations,cn=Monitor
+  name: operations_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_completed
+  dn: cn=Operations,cn=Monitor
+  name: operations_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_bind_initiated
+  dn: cn=Bind,cn=Operations,cn=Monitor
+  name: operations_bind_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_bind_completed
+  dn: cn=Bind,cn=Operations,cn=Monitor
+  name: operations_bind_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_unbind_initiated
+  dn: cn=Unbind,cn=Operations,cn=Monitor
+  name: operations_unbind_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_unbind_completed
+  dn: cn=Unbind,cn=Operations,cn=Monitor
+  name: operations_unbind_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_search_initiated
+  dn: cn=Search,cn=Operations,cn=Monitor
+  name: operations_search_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_search_completed
+  dn: cn=Search,cn=Operations,cn=Monitor
+  name: operations_search_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_compare_initiated
+  dn: cn=Compare,cn=Operations,cn=Monitor
+  name: operations_compare_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_compare_completed
+  dn: cn=Compare,cn=Operations,cn=Monitor
+  name: operations_compare_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_modify_initiated
+  dn: cn=Modify,cn=Operations,cn=Monitor
+  name: operations_modify_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_modify_completed
+  dn: cn=Modify,cn=Operations,cn=Monitor
+  name: operations_modify_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_modrdn_initiated
+  dn: cn=Modrdn,cn=Operations,cn=Monitor
+  name: operations_modrdn_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_modrdn_completed
+  dn: cn=Modrdn,cn=Operations,cn=Monitor
+  name: operations_modrdn_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_add_initiated
+  dn: cn=Add,cn=Operations,cn=Monitor
+  name: operations_add_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_add_completed
+  dn: cn=Add,cn=Operations,cn=Monitor
+  name: operations_add_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_delete_initiated
+  dn: cn=Delete,cn=Operations,cn=Monitor
+  name: operations_delete_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_delete_completed
+  dn: cn=Delete,cn=Operations,cn=Monitor
+  name: operations_delete_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_abandon_initiated
+  dn: cn=Abandon,cn=Operations,cn=Monitor
+  name: operations_abandon_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_abandon_completed
+  dn: cn=Abandon,cn=Operations,cn=Monitor
+  name: operations_abandon_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpInitiated
+  description: operations_extended_initiated
+  dn: cn=Extended,cn=Operations,cn=Monitor
+  name: operations_extended_initiated
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorOpCompleted
+  description: operations_extended_completed
+  dn: cn=Extended,cn=Operations,cn=Monitor
+  name: operations_extended_completed
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorCounter
+  description: Network bytes sent
+  dn: cn=Bytes,cn=Statistics,cn=Monitor
+  name: statistics_bytes
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorCounter
+  description: PDU sent
+  dn: cn=PDU,cn=Statistics,cn=Monitor
+  name: pdu_statistics
+  unit: By
+
+- aggregator: LastValue
+  attribute: monitorCounter
+  description: entries_statistics
+  dn: cn=Entries,cn=Statistics,cn=Monitor
+  name: entries_statistics
+  unit: By
+- aggregator: LastValue
+  attribute: monitorCounter
+  description: referrals_statistics
+  dn: cn=Referrals,cn=Statistics,cn=Monitor
+  name: referrals_statistics
+  unit: By
+- aggregator: LastValue
+  attribute: monitoredInfo
+  description: max_threads
+  dn: cn=Max,cn=Threads,cn=Monitor
+  name: max_threads
+  unit: By
+- aggregator: LastValue
+  attribute: monitoredInfo
+  description: max_pending_threads
+  dn: cn=Max Pending,cn=Threads,cn=Monitor
+  name: max_pending_threads
+  unit: By
+- aggregator: LastValue
+  attribute: monitoredInfo
+  description: open_threads
+  dn: cn=Open,cn=Threads,cn=Monitor
+  name: open_threads
+  unit: By
+- aggregator: LastValue
+  attribute: monitoredInfo
+  description: starting_threads
+  dn: cn=Starting,cn=Threads,cn=Monitor
+  name: starting_threads
+  unit: By
+- aggregator: LastValue
+  attribute: monitoredInfo
+  description: active_threads
+  dn: cn=Active,cn=Threads,cn=Monitor
+  name: active_threads
+  unit: By
+- aggregator: LastValue
+  attribute: monitoredInfo
+  description: pending_threads
+  dn: cn=Pending,cn=Threads,cn=Monitor
+  name: pending_threads
+  unit: By
+- aggregator: LastValue
+  attribute: monitoredInfo
+  description: backload_threads
+  dn: cn=Backload,cn=Threads,cn=Monitor
+  name: backload_threads
+  unit: By
+#- aggregator: LastValue
+#  attribute: monitoredInfo
+#  description: state_threads
+#  dn: cn=State,cn=Threads,cn=Monitor
+#  name: state_threads
+#  unit: By
+#- aggregator: LastValue
+#  attribute: monitorTimestamp
+#  description: start_time
+#  dn: cn=Start,cn=Time,cn=Monitor
+#  name: start_time
+#  unit: By
+#- aggregator: LastValue
+#  attribute: monitorTimestamp
+#  description: current_time
+#  dn: cn=Current,cn=Time,cn=Monitor
+#  name: current_time
+#  unit: By
+- aggregator: LastValue
+  attribute: monitoredInfo
+  description: uptime_time
+  dn: cn=Uptime,cn=Time,cn=Monitor
+  name: uptime_time
+  unit: By
+- aggregator: LastValue
+  attribute: monitorCounter
+  description: read_waiters
+  dn: cn=Read,cn=Waiters,cn=Monitor
+  name: read_waiters
+  unit: By
+- aggregator: LastValue
+  attribute: monitorCounter
+  description: write_waiters
+  dn: cn=Write,cn=Waiters,cn=Monitor
+  name: write_waiters
+  unit: By
