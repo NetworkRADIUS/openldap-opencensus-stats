@@ -148,11 +148,6 @@ Each entry will have the structure:
   Commonly this will be `1`, `By` (Bytes), or `s` (seconds).
   __Default: 1__
 
-## Running
-```bash
-> python3 ./ldap_metrics.py ./ldap_metrics.yml
-```
-
 ## Credits
 Copyright 2023, NetworkRADIUS 
 This utility was written by Mark Donnelly, mark - at - painless-securtiy - dot - com.
