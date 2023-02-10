@@ -32,23 +32,25 @@ from opencensus.ext.prometheus import stats_exporter
 from opencensus.stats import view, measure, aggregation, stats
 from opencensus.tags import tag_key, tag_map, tag_value
 
+SUPPORTED_EXPORTERS = ['Prometheus', 'Stackdriver']
+
 
 class LdapStatistic:
 
-    def __init__(self, config=None, tag_keys=None):
-        if config is None:
-            config = {}
+    def __init__(self, stat_configuration=None, tag_keys=None):
+        if stat_configuration is None:
+            stat_configuration = {}
         if tag_keys is None:
             tag_keys = []
-        self.dn = config.get('dn', '')
+        self.dn = stat_configuration.get('dn', '')
         if self.dn is None:
             logging.error("Aborting configuration of LDAP statistic due to lack of dn attribute.")
             raise ValueError('Statistics definition must include the dn attribute')
 
-        self.name = config.get('name', id(self))
-        self.attribute = config.get('attribute', '')
-        self.description = config.get('description', 'Unspecified')
-        self.unit = config.get('unit', '1')
+        self.name = stat_configuration.get('name', id(self))
+        self.attribute = stat_configuration.get('attribute', '')
+        self.description = stat_configuration.get('description', 'Unspecified')
+        self.unit = stat_configuration.get('unit', '1')
 
         self.measure = measure.MeasureFloat(
             name=self.name,
@@ -56,7 +58,7 @@ class LdapStatistic:
             unit=self.unit
         )
 
-        aggregator_class_name = f'{config.get("aggregator", "LastValue")}Aggregation'
+        aggregator_class_name = f'{stat_configuration.get("aggregator", "LastValue")}Aggregation'
         aggregator_class_module = __import__('opencensus.stats.aggregation', fromlist=aggregator_class_name)
         aggregator_class = getattr(aggregator_class_module, aggregator_class_name)
 
@@ -73,8 +75,8 @@ class LdapStatistic:
         return f"{self.name}:{self.attribute}"
 
     def collect(self, ldap_server=None, measurement_map=None):
-        def display_name(ldap_server, statistic):
-            return f"{ldap_server.database}:{statistic.display_name()}"
+        def display_name(server, statistic):
+            return f"{server.database}:{statistic.display_name()}"
 
         if ldap_server is None:
             logging.error(f"INTERNAL ERROR: Failing to collect statistic {self.display_name()} "
@@ -165,13 +167,12 @@ def parse_command_line():
 
     return parser.parse_args()
 
-def create_exporter(config=None):
-    SUPPORTED_EXPORTERS = ['Prometheus', 'Stackdriver']
-    if config is None:
-        raise ValueError("Cannot create an exporter with no configuration!")
+
+def create_exporter(exporter_configuration=None):
+    if exporter_configuration is None:
         raise ValueError("Cannot create an exporter with no configuration!")
 
-    name = config.get('name')
+    name = exporter_configuration.get('name')
     if name not in SUPPORTED_EXPORTERS:
         logging.error(
             f"Requested exporter named {name}, which is not supported.  Choose from:{', '.join(SUPPORTED_EXPORTERS)}"
@@ -180,9 +181,10 @@ def create_exporter(config=None):
             f"Requested exporter named {name}, which is not supported.  Choose from:{', '.join(SUPPORTED_EXPORTERS)}"
         )
 
-    options = config.get('options', {})
+    options = exporter_configuration.get('options', {})
+    exporter = None
     if "Prometheus" == name:
-        if 'options' not in config:
+        if 'options' not in exporter_configuration:
             logging.error("The Prometheus exporter requires options configuration.")
             raise ValueError("The Prometheus exporter requires options configuration.")
         final_options = {'namespace': 'openldap', 'port': 8000, 'address': '0.0.0.0'}
@@ -197,27 +199,28 @@ def create_exporter(config=None):
 
     return exporter
 
+
 def main():
     args = parse_command_line()
-    config = read_config_file(args.config_file)
-    log_config = config.get('logConfig')
+    configuration = read_config_file(args.config_file)
+    log_config = configuration.get('logConfig')
     if log_config and isinstance(log_config, dict):
         log_config['version'] = log_config.get('version', 1)
         logging.config.dictConfig(log_config)
 
     key_database = tag_key.TagKey('database')
     statistics = dict([
-        (statistic.get('name', ''), LdapStatistic(config=statistic, tag_keys=[key_database]))
+        (statistic.get('name', ''), LdapStatistic(stat_configuration=statistic, tag_keys=[key_database]))
         for statistic
-        in config.get('statistics', [])
+        in configuration.get('statistics', [])
     ])
-    for exporter_config in config.get('exporters', []):
+    for exporter_config in configuration.get('exporters', []):
         exporter = create_exporter(exporter_config)
         stats.stats.view_manager.register_exporter(exporter)
 
     servers = {}
     chosen_statistics = {}
-    for entry in config.get('ldapServers', []):
+    for entry in configuration.get('ldapServers', []):
         connection_config = entry.get('connection', {})
         ldap_server = LdapServer(
             uri=connection_config.get('serverUri'),
