@@ -34,58 +34,63 @@ from opencensus.tags import tag_key, tag_map, tag_value
 
 SUPPORTED_EXPORTERS = ['Prometheus', 'Stackdriver']
 
+# Make up for broken code in the Prometheus exporter
+from opencensus.stats import aggregation_data
+opencensus.stats.aggregation_data.SumAggregationDataFloat = opencensus.stats.aggregation_data.SumAggregationData
 
 class LdapStatistic:
 
-    def __init__(self, stat_configuration=None, tag_keys=None):
-        if stat_configuration is None:
-            stat_configuration = {}
+    @staticmethod
+    def log_and_raise(message=''):
+        logging.error(message)
+        raise ValueError(message)
+
+    def __init__(self,
+                 dn=None,
+                 name=None,
+                 attribute=None,
+                 description='Unspecified',
+                 unit='By',
+                 tag_keys=None):
         if tag_keys is None:
             tag_keys = []
-        self.dn = stat_configuration.get('dn', '')
-        if self.dn is None:
-            logging.error("Aborting configuration of LDAP statistic due to lack of dn attribute.")
-            raise ValueError('Statistics definition must include the dn attribute')
+        if dn is None:
+            self.log_and_raise('Statistics definition must include the dn attribute')
+        if name is None:
+            self.log_and_raise('Statistics definition must include a name for the statistic')
+        if attribute is None:
+            self.log_and_raise('Statistics definition must include the attribute to query')
 
-        self.name = stat_configuration.get('name', id(self))
-        self.attribute = stat_configuration.get('attribute', '')
-        self.description = stat_configuration.get('description', 'Unspecified')
-        self.unit = stat_configuration.get('unit', '1')
-
+        self.attribute = attribute
+        self.dn = dn
         self.measure = measure.MeasureFloat(
-            name=self.name,
-            description=self.description,
-            unit=self.unit
+            name=name,
+            description=description,
+            unit=unit
         )
 
-        aggregator_class_name = f'{stat_configuration.get("aggregator", "LastValue")}Aggregation'
-        aggregator_class_module = __import__('opencensus.stats.aggregation', fromlist=aggregator_class_name)
-        aggregator_class = getattr(aggregator_class_module, aggregator_class_name)
-
         self.view = view.View(
-            name=self.name,
-            description=self.description,
+            name=name,
+            description=description,
             columns=tag_keys,
-            aggregation=aggregator_class(),
+            aggregation=aggregation.LastValueAggregation(),
             measure=self.measure
         )
         stats.stats.view_manager.register_view(self.view)
 
     def display_name(self):
-        return f"{self.name}:{self.attribute}"
+        return f"{self.measure.name}:{self.attribute}"
 
     def collect(self, ldap_server=None, measurement_map=None):
         def display_name(server, statistic):
             return f"{server.database}:{statistic.display_name()}"
 
         if ldap_server is None:
-            logging.error(f"INTERNAL ERROR: Failing to collect statistic {self.display_name()} "
-                          f"because no LDAP server supplied.")
-            raise ValueError("LDAP server must be supplied to LdapStatistic.collect.")
+            self.log_and_raise(f"INTERNAL ERROR: Failing to collect statistic {self.display_name()} "
+                               f"because no LDAP server supplied.")
         if measurement_map is None:
-            logging.error(f"INTERNAL ERROR: Failing to collect statistic {self.display_name()} "
-                          f"because no measurement map was supplied.")
-            raise ValueError("The measurement map must be supplied to LdapStatistic.collect")
+            self.log_and_raise(f"INTERNAL ERROR: Failing to collect statistic {self.display_name()} "
+                               f"because no measurement map was supplied.")
 
         value = ldap_server.query_dn_and_attribute(self.dn, self.attribute)
         if value is None:
@@ -200,6 +205,52 @@ def create_exporter(exporter_configuration=None):
     return exporter
 
 
+def generate_statistics(configuration=None, tag_keys=None, dn_root='', name_root='', name=None):
+    def append(stem=None, suffix=None, separator='/'):
+        x = [stem, suffix]
+        y = [item for item in x if item]
+        return separator.join(y)
+
+    if tag_keys is None:
+        tag_keys = []
+    if configuration.get('name'):
+        name = configuration.get('name')
+    if name is None:
+        raise ValueError(f'Name is required at {name_root}')
+
+    if configuration is None:
+        return []
+    if not {'rdn'}.issubset(set(configuration.keys())):
+        raise ValueError(f'Required configuration not found for {name}: {configuration}')
+
+    statistics = {}
+
+    full_dn = append(stem=configuration.get('rdn', ''), suffix=dn_root, separator=',')
+
+    for sub_name, sub_configuration in configuration.get('object', {}).items():
+        statistics.update(generate_statistics(
+            configuration=sub_configuration,
+            tag_keys=tag_keys,
+            dn_root=full_dn,
+            name_root=append(stem=name_root, suffix=name),
+            name=sub_name
+        ))
+
+    for metric_name, metric_configuration in configuration.get('metric', {}).items():
+        object_name = append(name_root, name)
+        full_name = append(object_name, metric_name)
+        statistics[full_name] = LdapStatistic(
+            dn=full_dn,
+            name=full_name,
+            attribute=metric_configuration.get('attribute'),
+            description=metric_configuration.get('description'),
+            unit=metric_configuration.get('unit'),
+            tag_keys=tag_keys
+        )
+
+    return statistics
+
+
 def main():
     args = parse_command_line()
     configuration = read_config_file(args.config_file)
@@ -209,11 +260,16 @@ def main():
         logging.config.dictConfig(log_config)
 
     key_database = tag_key.TagKey('database')
-    statistics = dict([
-        (statistic.get('name', ''), LdapStatistic(stat_configuration=statistic, tag_keys=[key_database]))
-        for statistic
-        in configuration.get('statistics', [])
-    ])
+    tag_keys = [key_database]
+    statistics = {}
+    for name, object_configuration in configuration.get('object', {}).items():
+        statistics.update(generate_statistics(
+            configuration=object_configuration,
+            tag_keys=tag_keys,
+            dn_root='',
+            name_root='',
+            name=name
+        ))
     for exporter_config in configuration.get('exporters', []):
         exporter = create_exporter(exporter_config)
         stats.stats.view_manager.register_exporter(exporter)
