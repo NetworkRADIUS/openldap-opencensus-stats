@@ -5,14 +5,14 @@ import ldap
 
 class LdapServer:
     def __init__(self,
-                 uri,
+                 server_uri,
                  user_dn=None,
                  user_password=None,
                  database=None,
                  start_tls=False,
                  timeout=-1):
         if database is None:
-            database = uri
+            database = server_uri
 
         self.connection = None
         self.database = database
@@ -20,7 +20,7 @@ class LdapServer:
         self.user_password = user_password
 
         self.connect_to_ldap(
-            server_uri=uri,
+            server_uri=server_uri,
             start_tls=start_tls,
             timeout=timeout
         )
