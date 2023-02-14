@@ -40,7 +40,7 @@ opencensus.stats.aggregation_data.SumAggregationDataFloat = opencensus.stats.agg
 SUPPORTED_EXPORTERS = ['Prometheus', 'Stackdriver']
 
 
-def read_config_file(file_name):
+def read_yaml_file(file_name):
     with open(file_name, 'r') as file:
         ret_val = yaml.safe_load(file)
     return ret_val
@@ -133,7 +133,7 @@ def generate_statistics(configuration=None, tag_keys=None, dn_root='', name_root
 
 def main():
     args = parse_command_line()
-    configuration = read_config_file(args.config_file)
+    configuration = read_yaml_file(args.config_file)
     log_config = configuration.get('logConfig')
     if log_config and isinstance(log_config, dict):
         log_config['version'] = log_config.get('version', 1)
