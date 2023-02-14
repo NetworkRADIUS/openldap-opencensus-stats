@@ -23,81 +23,22 @@ import ldap
 import logging
 import yaml
 
+from ldapstats.ldap_statistic import LdapStatistic
+
 import opencensus.ext.stackdriver.stats_exporter
 
 from logging import config
 
 from opencensus.ext import prometheus, stackdriver
 from opencensus.ext.prometheus import stats_exporter
-from opencensus.stats import view, measure, aggregation, stats
+from opencensus.stats import view, stats
 from opencensus.tags import tag_key, tag_map, tag_value
-
-SUPPORTED_EXPORTERS = ['Prometheus', 'Stackdriver']
 
 # Make up for broken code in the Prometheus exporter
 from opencensus.stats import aggregation_data
 opencensus.stats.aggregation_data.SumAggregationDataFloat = opencensus.stats.aggregation_data.SumAggregationData
 
-class LdapStatistic:
-
-    @staticmethod
-    def log_and_raise(message=''):
-        logging.error(message)
-        raise ValueError(message)
-
-    def __init__(self,
-                 dn=None,
-                 name=None,
-                 attribute=None,
-                 description='Unspecified',
-                 unit='By',
-                 tag_keys=None):
-        if tag_keys is None:
-            tag_keys = []
-        if dn is None:
-            self.log_and_raise('Statistics definition must include the dn attribute')
-        if name is None:
-            self.log_and_raise('Statistics definition must include a name for the statistic')
-        if attribute is None:
-            self.log_and_raise('Statistics definition must include the attribute to query')
-
-        self.attribute = attribute
-        self.dn = dn
-        self.measure = measure.MeasureFloat(
-            name=name,
-            description=description,
-            unit=unit
-        )
-
-        self.view = view.View(
-            name=name,
-            description=description,
-            columns=tag_keys,
-            aggregation=aggregation.LastValueAggregation(),
-            measure=self.measure
-        )
-        stats.stats.view_manager.register_view(self.view)
-
-    def display_name(self):
-        return f"{self.measure.name}:{self.attribute}"
-
-    def collect(self, ldap_server=None, measurement_map=None):
-        def display_name(server, statistic):
-            return f"{server.database}:{statistic.display_name()}"
-
-        if ldap_server is None:
-            self.log_and_raise(f"INTERNAL ERROR: Failing to collect statistic {self.display_name()} "
-                               f"because no LDAP server supplied.")
-        if measurement_map is None:
-            self.log_and_raise(f"INTERNAL ERROR: Failing to collect statistic {self.display_name()} "
-                               f"because no measurement map was supplied.")
-
-        value = ldap_server.query_dn_and_attribute(self.dn, self.attribute)
-        if value is None:
-            logging.warning(f"No value collected for {display_name(ldap_server, self)}")
-            return
-        logging.debug(f"Collected value for {display_name(ldap_server, self)}: {value}")
-        measurement_map.measure_float_put(self.measure, float(value[0]))
+SUPPORTED_EXPORTERS = ['Prometheus', 'Stackdriver']
 
 
 class LdapServer:
