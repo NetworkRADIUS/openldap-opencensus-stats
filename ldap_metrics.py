@@ -37,7 +37,7 @@ def main():
             mmap = stats.stats.stats_recorder.new_measurement_map()
             for statistic in server_statistics:
                 statistic.collect(ldap_server=ldap_server, measurement_map=mmap)
-            tmap = configuration.record_tags(ldap_server, mmap)
+            tmap = configuration.record_tags(ldap_server)
             mmap.record(tmap)
         configuration.sleep()
 

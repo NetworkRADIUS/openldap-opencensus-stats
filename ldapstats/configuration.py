@@ -46,7 +46,6 @@ class Configuration:
             exporter = create_exporter(exporter_config)
             stats.stats.view_manager.register_exporter(exporter)
 
-
     def _generate_ldap_server_dict(self):
         self._ldap_server_list = self._generate_ldap_server_list()
         self._statistics_dict = self.generate_statistics(
@@ -143,7 +142,7 @@ class Configuration:
         # {ldap_server: [ldap_statistic, ...], ...}
         return self._ldap_server_dict
 
-    def record_tags(self, ldap_server, mmap):
+    def record_tags(self, ldap_server):
         tmap = tag_map.TagMap()
         tmap.insert(self._tag_keys[0], tag_value.TagValue(ldap_server.database))
         return tmap
