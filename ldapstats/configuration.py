@@ -208,14 +208,22 @@ class SnakeCaseConfigurationTransformer(ConfigurationTransformer):
 class ChildObjectConfigurationTransformer(ConfigurationTransformer):
     @staticmethod
     def process(configuration):
-        config = copy.deepcopy(configuration)
-        if configuration.get('children'):
-            child_value = config.pop('children')
-            config['child1'] = child_value
-            config['child2'] = child_value
-            config['child3'] = child_value
-        config['object'] = ChildObjectConfigurationTransformer.process(config.get('object', {}))
-        return config
+        if isinstance(configuration, dict):
+            config = {}
+            for key, value in configuration.items():
+                proper_value = ChildObjectConfigurationTransformer.process(value)
+                if key == 'children':
+                    config['child1'] = proper_value
+                else:
+                    config[key] = proper_value
+            return config
+        elif isinstance(configuration, list):
+            return [
+                ChildObjectConfigurationTransformer.process(item)
+                for item in configuration
+            ]
+        else:
+            return configuration
 
 
 def read_yaml_file(file_name):
