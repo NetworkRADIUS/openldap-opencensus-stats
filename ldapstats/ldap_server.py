@@ -3,6 +3,21 @@ import logging
 import ldap
 
 
+class LdapServerPool:
+    _ldap_servers = {}
+
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(LdapServerPool, cls).__new__(cls)
+        return cls.instance
+
+    def get_ldap_server(self, **kwargs):
+        if not self._ldap_servers.get(kwargs['database']):
+            self._ldap_servers[kwargs['database']] = LdapServer(**kwargs)
+            logging.critical(f"Registered LDAP Server: {kwargs['database']}")
+        return self._ldap_servers[kwargs['database']]
+
+
 class LdapServer:
     def __init__(self,
                  server_uri,

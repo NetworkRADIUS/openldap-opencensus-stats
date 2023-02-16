@@ -1,4 +1,3 @@
-import copy
 import logging
 import logging.config
 import re
@@ -6,7 +5,8 @@ import re
 import yaml
 from time import sleep
 
-from ldapstats.ldap_server import LdapServer
+from ldapstats.config_transformers.base import ConfigurationTransformationChainSingleton
+from ldapstats.ldap_server import LdapServerPool
 from ldapstats.ldap_statistic import LdapStatistic
 
 from opencensus.stats import stats
@@ -82,7 +82,7 @@ class Configuration:
                 for name, value in connection.items()
             ])
             args['database'] = server_config.get('database')
-            self._ldap_server_list.append(LdapServer(**args))
+            self._ldap_server_list.append(LdapServerPool().get_ldap_server(**args))
         return self._ldap_server_list
 
     @staticmethod
@@ -151,175 +151,6 @@ class Configuration:
 
     def sleep(self):
         sleep(self._sleep_time)
-
-
-class ConfigurationTransformationChainSingleton:
-    transformation_chain = []
-
-    def __new__(cls, *args, **kwargs):
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(ConfigurationTransformationChainSingleton, cls).__new__(cls)
-        return cls.instance
-
-    def register(self, cls):
-        self.transformation_chain.append(cls)
-        logging.info(f"Registered transformer: {cls.__name__}")
-
-    def transform_configuration(self, configuration):
-        configuration_result = {}
-        configuration_input = configuration
-        for link in self.transformation_chain:
-            print(f"Calling configuration chain link {link.__name__}")
-            configuration_result = link.process(configuration_input)
-            configuration_input = configuration_result
-        return configuration_result
-
-
-class ConfigurationTransformer:
-    transformers = []
-
-    def __init_subclass__(cls, **kwargs):
-        ConfigurationTransformationChainSingleton().register(cls)
-
-    @staticmethod
-    def process(configuration):
-        return configuration
-
-
-class SnakeCaseConfigurationTransformer(ConfigurationTransformer):
-    @staticmethod
-    def process(configuration):
-        config = {}
-        for key, value in configuration.items():
-            snake_case_key = re.sub(r'(?<!^)(?=[A-Z])', '_', key).lower()
-            if isinstance(value, dict):
-                snake_cased_value = SnakeCaseConfigurationTransformer.process(value)
-            elif isinstance(value, list):
-                snake_cased_value = [
-                    SnakeCaseConfigurationTransformer.process(x) if isinstance(x, dict) else x
-                    for x in value
-                ]
-            else:
-                snake_cased_value = value
-            config[snake_case_key] = snake_cased_value
-        return config
-
-
-class ChildObjectConfigurationTransformer(ConfigurationTransformer):
-    @staticmethod
-    def process(configuration):
-        if isinstance(configuration, dict):
-            config = {}
-            for key, value in configuration.items():
-                proper_value = ChildObjectConfigurationTransformer.process(value)
-                if key == 'children':
-                    config['child1'] = proper_value
-                else:
-                    config[key] = proper_value
-            return config
-        elif isinstance(configuration, list):
-            return [
-                ChildObjectConfigurationTransformer.process(item)
-                for item in configuration
-            ]
-        else:
-            return configuration
-
-
-class MetricNameConfigurationTransformer(ConfigurationTransformer):
-    @staticmethod
-    def process(configuration):
-        if not isinstance(configuration, dict):
-            raise ValueError(
-                'NameConfigurationTransformer expect a configuration that is a dict but received one that isn\'t.')
-        config = copy.deepcopy(configuration)
-        object_config = config.get('object')
-        if object_config:
-            config['object'] = MetricNameConfigurationTransformer.process_object_config(
-                configuration=object_config
-            )
-        return config
-
-    @staticmethod
-    def process_object_config(configuration, prefix='', default_name='', separator='/'):
-        full_prefix = prefix + separator if prefix else ''
-        if isinstance(configuration, dict):
-            config = {}
-            metric_name = prefix
-            if configuration.get('rdn') or configuration.get('attribute'):
-                metric_name = full_prefix + configuration.get('name', default_name)
-                config['metric_name'] = metric_name
-            for key, value in configuration.items():
-                config[key] = MetricNameConfigurationTransformer.process_object_config(
-                    configuration=value,
-                    prefix=metric_name,
-                    default_name=key,
-                    separator=separator
-                )
-            return config
-        elif isinstance(configuration, list):
-            return [
-                MetricNameConfigurationTransformer.process_object_config(
-                    configuaration=item,
-                    prefix=prefix,
-                    default_name=default_name,
-                    separator=separator
-                )
-                for item in configuration
-            ]
-        else:
-            return configuration
-
-
-class MetricDnConfigurationTransformer(ConfigurationTransformer):
-    @staticmethod
-    def process(configuration):
-        if not isinstance(configuration, dict):
-            raise ValueError(
-                'NameConfigurationTransformer expect a configuration that is a dict but received one that isn\'t.')
-        config = copy.deepcopy(configuration)
-        object_config = config.get('object')
-        if object_config:
-            config['object'] = MetricDnConfigurationTransformer.process_object_config(
-                configuration=object_config
-            )
-        return config
-
-    @staticmethod
-    def process_object_config(configuration, suffix_dn='', separator=','):
-        if isinstance(configuration, dict):
-            config = {}
-            if suffix_dn:
-                full_suffix = separator + suffix_dn
-            else:
-                full_suffix = suffix_dn
-            computed_dn = suffix_dn
-            if configuration.get('rdn'):
-                computed_dn = configuration.get('rdn') + full_suffix
-
-            # True if either 'rdn' or 'attribute' is a key
-            if configuration.get('rdn', configuration.get('attribute')):
-                config['computed_dn'] = computed_dn
-            else:
-                computed_dn = suffix_dn
-            for key, value in configuration.items():
-                config[key] = MetricDnConfigurationTransformer.process_object_config(
-                    configuration=value,
-                    suffix_dn=computed_dn,
-                    separator=separator
-                )
-            return config
-        elif isinstance(configuration, list):
-            return [
-                MetricDnConfigurationTransformer.process_object_config(
-                    configuaration=item,
-                    suffix_dn=suffix_dn,
-                    separator=separator
-                )
-                for item in configuration
-            ]
-        else:
-            return configuration
 
 
 def read_yaml_file(file_name):
