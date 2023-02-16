@@ -1,3 +1,4 @@
+import copy
 import logging
 import logging.config
 import re
@@ -36,20 +37,21 @@ class Configuration:
 
     def reconfigure(self):
         self._configuration_dict = read_yaml_file(self._config_file_name)
-        self._ldap_server_dict = self._generate_ldap_server_dict()
-        self._sleep_time = self._configuration_dict.get('period', 5)
-        log_config = self._configuration_dict.get('logConfig')
+        normalized_configuration = ConfigurationTransformationChainSingleton().transform_configuration(self._configuration_dict)
+        self._ldap_server_dict = self._generate_ldap_server_dict(normalized_configuration)
+        self._sleep_time = normalized_configuration.get('period', 5)
+        log_config = normalized_configuration.get('logConfig')
         if log_config and isinstance(log_config, dict):
             log_config['version'] = log_config.get('version', 1)
             logging.config.dictConfig(log_config)
-        for exporter_config in self._configuration_dict.get('exporters', []):
+        for exporter_config in normalized_configuration.get('exporters', []):
             exporter = create_exporter(exporter_config)
             stats.stats.view_manager.register_exporter(exporter)
 
-    def _generate_ldap_server_dict(self):
+    def _generate_ldap_server_dict(self, normalized_configuration):
         self._ldap_server_list = self._generate_ldap_server_list()
         self._statistics_dict = self.generate_statistics(
-            configuration=self._configuration_dict,
+            configuration=normalized_configuration,
             name='',
             tag_keys=self._tag_keys
         )
@@ -149,6 +151,71 @@ class Configuration:
 
     def sleep(self):
         sleep(self._sleep_time)
+
+
+class ConfigurationTransformationChainSingleton:
+    transformation_chain = []
+
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(ConfigurationTransformationChainSingleton, cls).__new__(cls)
+        return cls.instance
+
+    def register(self, cls):
+        self.transformation_chain.append(cls)
+        logging.info(f"Registered transformer: {cls.__name__}")
+
+    def transform_configuration(self, configuration):
+        configuration_result = {}
+        configuration_input = configuration
+        for link in self.transformation_chain:
+            print(f"Calling configuration chain link {link.__name__}")
+            configuration_result = link.process(configuration_input)
+            configuration_input = configuration_result
+        return configuration_result
+
+
+class ConfigurationTransformer:
+    transformers = []
+
+    def __init_subclass__(cls, **kwargs):
+        ConfigurationTransformationChainSingleton().register(cls)
+
+    @staticmethod
+    def process(configuration):
+        return configuration
+
+
+class SnakeCaseConfigurationTransformer(ConfigurationTransformer):
+    @staticmethod
+    def process(configuration):
+        config = {}
+        for key, value in configuration.items():
+            snake_case_key = re.sub(r'(?<!^)(?=[A-Z])', '_', key).lower()
+            if isinstance(value, dict):
+                snake_cased_value = SnakeCaseConfigurationTransformer.process(value)
+            elif isinstance(value, list):
+                snake_cased_value = [
+                    SnakeCaseConfigurationTransformer.process(x) if isinstance(x, dict) else x
+                    for x in value
+                ]
+            else:
+                snake_cased_value = value
+            config[snake_case_key] = snake_cased_value
+        return config
+
+
+class ChildObjectConfigurationTransformer(ConfigurationTransformer):
+    @staticmethod
+    def process(configuration):
+        config = copy.deepcopy(configuration)
+        if configuration.get('children'):
+            child_value = config.pop('children')
+            config['child1'] = child_value
+            config['child2'] = child_value
+            config['child3'] = child_value
+        config['object'] = ChildObjectConfigurationTransformer.process(config.get('object', {}))
+        return config
 
 
 def read_yaml_file(file_name):
