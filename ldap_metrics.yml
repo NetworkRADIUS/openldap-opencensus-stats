@@ -44,21 +44,21 @@ object:
   database:
     rdn: cn=Databases,cn=Monitor
     object:
-      child:
+      children:
         # "rdn both filters the children of the dn that will be"
         # "evaluated, and allows extraction of part of the RDN for use
         # "in naming"
         # "rdn is always evaluated as a regex"
-#        rdn: cn=Database ([0-9]+)
-        rdn: cn=Database 2
+        rdn: cn=Database ([0-9]+)
+#        rdn: cn=Database 2
 
         # "name is treated as a format string with expansions to allow"
         # "access to regex capture groups and attributes in the child"
         # "object"
         # "If there's a built in format function we can pass kwargs"
         # "to for attrs and regex, we should use that."
-#        name: "{attr.monitoredInfo}{rdn.1}"
-        name: "database2"
+        name: "{attr.monitoredInfo}{rdn.1}"
+#        name: "database2"
 
         # Child metric definitions
         metric:
