@@ -6,16 +6,7 @@ from ldapstats.config_transformers.base import ConfigurationTransformer
 class MetricNameConfigurationTransformer(ConfigurationTransformer):
     @staticmethod
     def process(configuration):
-        if not isinstance(configuration, dict):
-            raise ValueError(
-                'NameConfigurationTransformer expect a configuration that is a dict but received one that isn\'t.')
-        config = copy.deepcopy(configuration)
-        object_config = config.get('object')
-        if object_config:
-            config['object'] = MetricNameConfigurationTransformer.process_object_config(
-                configuration=object_config
-            )
-        return config
+        return MetricNameConfigurationTransformer.process_object_config(configuration)
 
     @staticmethod
     def process_object_config(configuration, prefix='', default_name='', separator='/'):
@@ -24,7 +15,7 @@ class MetricNameConfigurationTransformer(ConfigurationTransformer):
             config = {}
             metric_name = prefix
             if configuration.get('rdn') or configuration.get('attribute'):
-                metric_name = full_prefix + configuration.get('name', default_name)
+                metric_name = full_prefix + configuration.get('computed_name', configuration.get('name', default_name))
                 config['metric_name'] = metric_name
             for key, value in configuration.items():
                 config[key] = MetricNameConfigurationTransformer.process_object_config(
