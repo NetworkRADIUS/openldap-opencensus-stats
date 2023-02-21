@@ -11,6 +11,16 @@ class ConfigurationTransformer:
     def process(configuration):
         return configuration
 
+    @staticmethod
+    def get_ldap_server(server_config):
+        args = dict([
+            (re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower(), value)
+            for name, value in server_config.get('connection', {}).items()
+        ])
+        args['database'] = server_config.get('database')
+        ldap_server = LdapServerPool().get_ldap_server(**args)
+        return ldap_server
+
 
 class ConfigurationTransformationChainSingleton:
     transformation_chain = []

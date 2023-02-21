@@ -37,7 +37,7 @@ class MetricNameConfigurationTransformer(ConfigurationTransformer):
         elif isinstance(configuration, list):
             return [
                 MetricNameConfigurationTransformer.process_object_config(
-                    configuaration=item,
+                    configuration=item,
                     prefix=prefix,
                     default_name=default_name,
                     separator=separator

@@ -16,12 +16,7 @@ class ChildObjectConfigurationTransformer(ConfigurationTransformer):
 
         config = copy.deepcopy(configuration)
         for server_config in config.get('ldap_servers'):
-            args = dict([
-                (re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower(), value)
-                for name, value in server_config.get('connection', {}).items()
-            ])
-            args['database'] = server_config.get('database')
-            ldap_server = LdapServerPool().get_ldap_server(**args)
+            ldap_server = ChildObjectConfigurationTransformer.get_ldap_server(server_config)
             server_config['object'] = ChildObjectConfigurationTransformer.process_objects_for_ldap_server(
                 configuration=server_config.get('object', {}),
                 dn='',
@@ -32,9 +27,9 @@ class ChildObjectConfigurationTransformer(ConfigurationTransformer):
 
     @staticmethod
     def process_objects_for_ldap_server(configuration, dn, ldap_server):
-        if not configuration or not ldap_server:
+        if not configuration or not dn or not ldap_server:
             raise ValueError(
-                'ChildObjectConfigurationTransformer.process_objects_for_ldap_server: Both arguments must exist'
+                'ChildObjectConfigurationTransformer.process_objects_for_ldap_server: All arguments must exist'
             )
 
         if isinstance(configuration, dict):
