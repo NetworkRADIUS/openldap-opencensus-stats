@@ -1,4 +1,6 @@
 import copy
+import logging
+import re
 
 from ldapstats.config_transformers.base import ConfigurationTransformer
 from ldapstats.ldap_server import LdapServerPool
@@ -31,14 +33,53 @@ class MetricNameInterpolationConfigurationTransformer(ConfigurationTransformer):
                 for item in configuration
             ]
         elif isinstance(configuration, dict):
-            config = copy.deepcopy(configuration)
-            if config.get('metric_name'):
-                config['metric_name'] = MetricNameInterpolationConfigurationTransformer.create_metric_name(config)
+            config = {}
+
+            for key, value in configuration.items():
+                proper_value = MetricNameInterpolationConfigurationTransformer.process_objects_for_ldap_server(
+                    value, dn, ldap_server)
+                if key in ['name']:
+                    config['computed_name'] = MetricNameInterpolationConfigurationTransformer.create_metric_name(
+                        configuration,
+                        ldap_server
+                    )
+                config[key] = proper_value
+
             return config
+
         else:
             return configuration
 
     @staticmethod
-    def create_metric_name(config):
-        
+    def create_metric_name(config, ldap_server):
+        def repl_func(matches):
+            groups = matches.groups()
+            if 'rdn' == groups[0]:
+                index = int(groups[1])
+                rdn_matches = re.match(
+                    config.get('rdn'),            # Pattern to match - the 'rdn' entry
+                    config.get('computed_rdn')    # String for matching - the 'computed_rdn' entry
+                )
+                if rdn_matches:
+                    return rdn_matches.group(index)
+            elif 'attr' == groups[0]:
+                attribute_name = groups[1]
+                ldap_result = ldap_server.query_dn_and_attribute(
+                    config.get('computed_dn', ''),
+                    attribute_name
+                )
+                value = ldap_result[0]
+                if isinstance(value, bytes):
+                    value = value.decode()
+                return str(value)
+            else:
+                logging.error(f"Unknown interpolation requested in name: {groups[0]}.{groups[1]}")
+
+        name = config.get('computed_name', config.get('name', ''))
+        name = re.sub(
+            '{([^\.}]+)\.([^}]+)}',
+            repl_func,
+            name
+        )
+        return name
 
