@@ -32,13 +32,9 @@ def main():
     args = parse_command_line()
     configuration = Configuration(args.config_file)
     while True:
-        metrics = configuration.metrics()
-        for ldap_server, server_statistics in metrics.items():
-            mmap = stats.stats.stats_recorder.new_measurement_map()
-            for statistic in server_statistics:
-                statistic.collect(ldap_server=ldap_server, measurement_map=mmap)
-            tmap = configuration.record_tags(ldap_server)
-            mmap.record(tmap)
+        metric_sets = configuration.metric_sets()
+        for metric_set in metric_sets:
+            metric_set.collect()
         configuration.sleep()
 
 
