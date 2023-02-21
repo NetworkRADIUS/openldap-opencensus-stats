@@ -44,7 +44,7 @@ class MetricDnConfigurationTransformer(ConfigurationTransformer):
         elif isinstance(configuration, list):
             return [
                 MetricDnConfigurationTransformer.process_object_config(
-                    configuaration=item,
+                    configuration=item,
                     suffix_dn=suffix_dn,
                     separator=separator
                 )
