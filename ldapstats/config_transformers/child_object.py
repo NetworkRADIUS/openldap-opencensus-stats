@@ -27,7 +27,7 @@ class ChildObjectConfigurationTransformer(ConfigurationTransformer):
 
     @staticmethod
     def process_objects_for_ldap_server(configuration, dn, ldap_server):
-        if not configuration or not dn or not ldap_server:
+        if not configuration or not ldap_server:
             raise ValueError(
                 'ChildObjectConfigurationTransformer.process_objects_for_ldap_server: All arguments must exist'
             )
