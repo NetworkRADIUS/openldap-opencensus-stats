@@ -1,3 +1,4 @@
+import copy
 import logging
 import logging.config
 import re
@@ -6,6 +7,7 @@ import yaml
 from time import sleep
 
 from ldapstats.config_transformers.base import ConfigurationTransformationChainSingleton
+from ldapstats.ldap_metric_set import MetricSet
 from ldapstats.ldap_server import LdapServerPool
 from ldapstats.ldap_statistic import LdapStatistic
 
@@ -27,20 +29,19 @@ class Configuration:
             raise ValueError(f"Config file name must be supplied")
         self._config_file_name = config_file_name
         self._configuration_dict = {}
-        self._ldap_server_list = []
-        self._statistics_dict = {}
-        self._tag_keys = [tag_key.TagKey('database')]
-        self._ldap_server_dict = {}
         self._sleep_time = 5
+        self._metric_sets = []
 
         self.reconfigure()
 
     def reconfigure(self):
         self._configuration_dict = read_yaml_file(self._config_file_name)
-        normalized_configuration = ConfigurationTransformationChainSingleton().transform_configuration(self._configuration_dict)
-        self._ldap_server_dict = self._generate_ldap_server_dict(normalized_configuration)
+        normalized_configuration = ConfigurationTransformationChainSingleton().transform_configuration(
+            self._configuration_dict
+        )
+
         self._sleep_time = normalized_configuration.get('period', 5)
-        log_config = normalized_configuration.get('logConfig')
+        log_config = normalized_configuration.get('log_config')
         if log_config and isinstance(log_config, dict):
             log_config['version'] = log_config.get('version', 1)
             logging.config.dictConfig(log_config)
@@ -48,106 +49,43 @@ class Configuration:
             exporter = create_exporter(exporter_config)
             stats.stats.view_manager.register_exporter(exporter)
 
-    def _generate_ldap_server_dict(self, normalized_configuration):
-        self._ldap_server_list = self._generate_ldap_server_list()
-        self._statistics_dict = self.generate_statistics(
-            configuration=normalized_configuration,
-            name='',
-            tag_keys=self._tag_keys
-        )
-        ldap_server_dict = {}
-        for ldap_server in self._ldap_server_list:
-            # Should never be None
-            server_configuration = self.get_configuration_for_ldap_server(ldap_server.database)
-            chosen_statistics = server_configuration.get('chosenStatistics', [])
-            if chosen_statistics and isinstance(chosen_statistics, list):
-                self._ldap_server_dict[ldap_server] = [
-                    statistic
-                    for statistic_name, statistic in self._statistics_dict.items()
-                    if statistic_name in chosen_statistics
-                ]
-            else:
-                ldap_server_dict[ldap_server] = list(self._statistics_dict.values())
-        return ldap_server_dict
-
-    def _generate_ldap_server_list(self):
-        server_config_list = self._configuration_dict.get('ldapServers', [])
-        self._ldap_server_list = []
-        for server_config in server_config_list:
-            connection = server_config.get('connection')
-            if connection is None:
-                raise ValueError(f"Connection details needed for ldapServer {server_config.get('database')}")
-            args = dict([
-                (re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower(), value)
-                for name, value in connection.items()
-            ])
-            args['database'] = server_config.get('database')
-            self._ldap_server_list.append(LdapServerPool().get_ldap_server(**args))
-        return self._ldap_server_list
+        for ldap_server_config in normalized_configuration.get('ldap_servers'):
+            metric_set = self.generate_metric_set(ldap_server_config)
+            self._metric_sets.append(metric_set)
 
     @staticmethod
-    def generate_statistics(configuration=None, tag_keys=None, dn_root='', name_root='', name=None):
-        def append(stem='', suffix='', separator='/'):
-            ret = stem
-            if suffix:
-                if stem:
-                    ret = ret + separator
-                ret = ret + suffix
-            return ret
-
-        if not configuration or not isinstance(configuration, dict):
-            return {}
-        if configuration.get('name'):
-            name = configuration.get('name')
-        if name is None:
-            raise ValueError(f"Name is required at {name_root}")
-        rdn = configuration.get('rdn', '')
-        if dn_root and not rdn:
-            raise ValueError(f"rdn is required at {name_root}")
-        full_dn = append(rdn, dn_root, ',')
-
-        statistics = {}
-        if isinstance(configuration.get('object'), dict):
-            for object_name in configuration.get('object').keys():
-                sub_name = append(name_root, name, '/')
-                statistics.update(
-                    Configuration.generate_statistics(
-                        configuration=configuration.get('object').get(object_name),
-                        tag_keys=tag_keys,
-                        dn_root=full_dn,
-                        name_root=sub_name,
-                        name=object_name
+    def generate_metric_set(ldap_server_config):
+        args = copy.deepcopy(ldap_server_config.get('connection', {}))
+        args['database'] = ldap_server_config.get('database')
+        ldap_server = LdapServerPool().get_ldap_server(**args)
+        metric_set = MetricSet(ldap_server=ldap_server)
+        configs = [ldap_server_config.get('object')]
+        while configs:
+            config = configs.pop()
+            if isinstance(config, list):
+                for item in config:
+                    configs.insert(0, item)
+            elif isinstance(config, dict):
+                dn = config.get('computed_dn')
+                name = config.get('metric_name')
+                attribute = config.get('attribute')
+                unit = config.get('unit')
+                description = config.get('description', '')
+                if dn and name and attribute and unit:
+                    stat = LdapStatistic(
+                        dn=dn,
+                        name=name,
+                        attribute=attribute,
+                        description=description,
+                        unit=unit
                     )
-                )
+                    metric_set.add_statistic(stat)
+                for key, value in config.items():
+                    configs.insert(0, value)
+        return metric_set
 
-        for metric_name, metric_configuration in configuration.get('metric', {}).items():
-            object_name = append(name_root, name, '/')
-            full_name = append(object_name, metric_name, '/')
-            statistics[full_name] = LdapStatistic(
-                dn=full_dn,
-                name=full_name,
-                attribute=metric_configuration.get('attribute'),
-                description=metric_configuration.get('description'),
-                unit=metric_configuration.get('unit'),
-                tag_keys=tag_keys
-            )
-
-        return statistics
-
-    def get_configuration_for_ldap_server(self, database):
-        for item in self._configuration_dict.get('ldapServers', []):
-            if item.get('database') == database:
-                return item
-        return None
-
-    def metrics(self):
-        # {ldap_server: [ldap_statistic, ...], ...}
-        return self._ldap_server_dict
-
-    def record_tags(self, ldap_server):
-        tmap = tag_map.TagMap()
-        tmap.insert(self._tag_keys[0], tag_value.TagValue(ldap_server.database))
-        return tmap
+    def metric_sets(self):
+        return self._metric_sets
 
     def sleep(self):
         sleep(self._sleep_time)
