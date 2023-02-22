@@ -80,6 +80,6 @@ class MetricNameInterpolationConfigurationTransformer(ConfigurationTransformer):
             '{([^\.}]+)\.([^}]+)}',
             repl_func,
             name
-        )
+        ).lower()
         return name
 
