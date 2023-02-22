@@ -31,6 +31,7 @@ class LdapStatistic:
                  attribute=None,
                  description='Unspecified',
                  unit='By',
+                 value_function='value',
                  tag_keys=None):
         if tag_keys is None:
             tag_keys = []
@@ -57,6 +58,7 @@ class LdapStatistic:
             measure=self.measure
         )
         stats.stats.view_manager.register_view(self.view)
+        self._value_function = lambda value: eval(value_function)
 
     def display_name(self):
         return f"{self.measure.name}:{self.attribute}"
@@ -72,9 +74,13 @@ class LdapStatistic:
             self.log_and_raise(f"INTERNAL ERROR: Failing to collect statistic {self.display_name()} "
                                f"because no measurement map was supplied.")
 
-        value = ldap_server.query_dn_and_attribute(self.dn, self.attribute)
-        if value is None:
-            logging.warning(f"No value collected for {display_name(ldap_server, self)}")
+        ldap_value = ldap_server.query_dn_and_attribute(self.dn, self.attribute)
+        if ldap_value is None:
+            logging.warning(f"No ldap_value collected for {display_name(ldap_server, self)}")
             return
-        logging.debug(f"Collected value for {display_name(ldap_server, self)}: {value}")
-        measurement_map.measure_float_put(self.measure, float(value[0]))
+        ldap_value_float = float(ldap_value[0])
+        logging.debug(f"Collected ldap_value for {display_name(ldap_server, self)}: {ldap_value_float}")
+        value = self._value_function(ldap_value_float)
+        if ldap_value_float != value:
+            logging.debug(f"  Transformed into: {value}")
+        measurement_map.measure_float_put(self.measure, value)

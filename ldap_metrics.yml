@@ -95,3 +95,15 @@ object:
             attribute: monitorOpCompleted
             description: Bind operations completed
             unit: By
+  statistics:
+    rdn: cn=Statistics,cn=Monitor
+    object:
+      children:
+        rdn: cn=(.*)
+        name: "{rdn.1}"
+        metric:
+          count:
+            attribute: monitorCounter
+            description: Count of objects
+            unit: By
+            func: value * 64
