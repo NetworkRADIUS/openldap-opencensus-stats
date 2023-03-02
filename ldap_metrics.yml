@@ -41,69 +41,72 @@ logConfig:
       class: logging.handlers.SysLogHandler
       level: WARNING
 object:
-  database:
-    rdn: cn=Databases,cn=Monitor
+  Monitor:
+    rdn: cn=Monitor
     object:
-      children:
-        # "rdn both filters the children of the dn that will be"
-        # "evaluated, and allows extraction of part of the RDN for use
-        # "in naming"
-        # "rdn is always evaluated as a regex"
-        rdn: cn=Database ([0-9]+)
-#        rdn: cn=Database 2
+      database:
+        rdn: cn=Databases
+        object:
+          children:
+            # "rdn both filters the children of the dn that will be"
+            # "evaluated, and allows extraction of part of the RDN for use
+            # "in naming"
+            # "rdn is always evaluated as a regex"
+            rdn: cn=Database ([0-9]+)
+    #        rdn: cn=Database 2
 
-        # "name is treated as a format string with expansions to allow"
-        # "access to regex capture groups and attributes in the child"
-        # "object"
-        # "If there's a built in format function we can pass kwargs"
-        # "to for attrs and regex, we should use that."
-        name: "{attr.monitoredInfo}{rdn.1}"
-#        name: "database2"
+            # "name is treated as a format string with expansions to allow"
+            # "access to regex capture groups and attributes in the child"
+            # "object"
+            # "If there's a built in format function we can pass kwargs"
+            # "to for attrs and regex, we should use that."
+            name: "{attr.monitoredInfo}{rdn.1}"
+    #        name: "database2"
 
-        # Child metric definitions
-        metric:
-          max_database_size:
-            attribute: olmMDBPagesMax
-            description: "Maximum number of pages usable by the database"
-            unit: By
-          used_database_size:
-            attribute: olmMDBPagesUsed
-            description: "Current number of pages used by the database"
-            unit: By
-  operations:
-    rdn: cn=Operations,cn=Monitor
-    object:
-      bind:
-        rdn: cn=Bind
-        metric:
-          initiated:
-            attribute: monitorOpInitiated
-            description: Bind operations initiated
-            unit: By
-          completed:
-            attribute: monitorOpCompleted
-            description: Bind operations completed
-            unit: By
-      unbind:
-        rdn: cn=Unbind
-        metric:
-          initiated:
-            attribute: monitorOpInitiated
-            description: Bind operations initiated
-            unit: By
-          completed:
-            attribute: monitorOpCompleted
-            description: Bind operations completed
-            unit: By
-  statistics:
-    rdn: cn=Statistics,cn=Monitor
-    object:
-      children:
-        rdn: cn=(.*)
-        name: "{rdn.1}"
-        metric:
-          count:
-            attribute: monitorCounter
-            description: Count of objects
-            unit: By
-            func: value * 64
+            # Child metric definitions
+            metric:
+              max_database_size:
+                attribute: olmMDBPagesMax
+                description: "Maximum number of pages usable by the database"
+                unit: By
+              used_database_size:
+                attribute: olmMDBPagesUsed
+                description: "Current number of pages used by the database"
+                unit: By
+      operations:
+        rdn: cn=Operations
+        object:
+          bind:
+            rdn: cn=Bind
+            metric:
+              initiated:
+                attribute: monitorOpInitiated
+                description: Bind operations initiated
+                unit: By
+              completed:
+                attribute: monitorOpCompleted
+                description: Bind operations completed
+                unit: By
+          unbind:
+            rdn: cn=Unbind
+            metric:
+              initiated:
+                attribute: monitorOpInitiated
+                description: Bind operations initiated
+                unit: By
+              completed:
+                attribute: monitorOpCompleted
+                description: Bind operations completed
+                unit: By
+      statistics:
+        rdn: cn=Statistics
+        object:
+          children:
+            rdn: cn=(.*)
+            name: "{rdn.1}"
+            metric:
+              count:
+                attribute: monitorCounter
+                description: Count of objects
+                unit: By
+                func: value * 64
