@@ -72,14 +72,16 @@ class Configuration:
                 unit = config.get('unit')
                 description = config.get('description', '')
                 value_function = config.get('func', 'value')
-                if dn and name and attribute and unit:
+                query_dn = config.get('query_dn')
+                if dn and name and attribute and unit and query_dn:
                     stat = LdapStatistic(
                         dn=dn,
                         name=name,
                         attribute=attribute,
                         description=description,
                         unit=unit,
-                        value_function=value_function
+                        value_function=value_function,
+                        query_dn=query_dn,
                     )
                     metric_set.add_statistic(stat)
                 for key, value in config.items():

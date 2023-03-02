@@ -32,6 +32,7 @@ class LdapStatistic:
                  description='Unspecified',
                  unit='By',
                  value_function='value',
+                 query_dn=None,
                  tag_keys=None):
         if tag_keys is None:
             tag_keys = []
@@ -41,9 +42,12 @@ class LdapStatistic:
             self.log_and_raise('Statistics definition must include a name for the statistic')
         if attribute is None:
             self.log_and_raise('Statistics definition must include the attribute to query')
+        if query_dn is None:
+            self.log_and_raise('Statistics definition must include the DN to query')
 
         self.attribute = attribute
         self.dn = dn
+        self.query_dn = query_dn
         self.measure = measure.MeasureFloat(
             name=name,
             description=description,
@@ -63,7 +67,7 @@ class LdapStatistic:
     def display_name(self):
         return f"{self.measure.name}:{self.attribute}"
 
-    def collect(self, ldap_server=None, measurement_map=None):
+    def collect(self, ldap_server=None, measurement_map=None, ldap_value=None):
         def display_name(server, statistic):
             return f"{server.database}:{statistic.display_name()}"
 
@@ -74,7 +78,8 @@ class LdapStatistic:
             self.log_and_raise(f"INTERNAL ERROR: Failing to collect statistic {self.display_name()} "
                                f"because no measurement map was supplied.")
 
-        ldap_value = ldap_server.query_dn_and_attribute(self.dn, self.attribute)
+        # if not ldap_value:
+        #     ldap_value = ldap_server.query_dn_and_attribute(self.dn, self.attribute)
         if ldap_value is None:
             logging.warning(f"No ldap_value collected for {display_name(ldap_server, self)}")
             return
