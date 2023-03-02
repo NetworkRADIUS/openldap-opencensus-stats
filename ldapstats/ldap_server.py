@@ -55,6 +55,7 @@ class LdapServer:
             self.connection.start_tls_s()
 
     def query(self, dn=None, scope=ldap.SCOPE_SUBTREE, attr_list=None):
+        logging.debug(f"Querying {self.database} for {dn}")
         if attr_list is None:
             attr_list = ['+']
         if dn is None:
