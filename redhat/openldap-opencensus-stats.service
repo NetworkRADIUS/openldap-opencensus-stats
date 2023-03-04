@@ -1,0 +1,14 @@
+[Unit]
+Description=openldap-opencensus-stats
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+EnvironmentFile=-/etc/sysconfig/openldap-opencensus-stats
+ExecStart=/usr/bin/openldap-opencensus-stats /etc/openldap-opencensus-stats.yml
+
+[Install]
+WantedBy=multi-user.target
