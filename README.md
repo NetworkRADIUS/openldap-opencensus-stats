@@ -17,15 +17,16 @@ monitoring software, such as GCP.
 pip3 install -r requirements.txt
 ```
 
+### Configuration
+A sample configuration file is provided in ldap_metrics.yml.  The
+configuration is YAML data, with the following structure:
+
 ## Running
 ```bash
 python3 ./ldap_metrics.py ./ldap_metrics.yml
 ```
 
-## Configuration
-A sample configuration file is provided in ldap_metrics.yml.  The
-configuration is YAML data, with the following structure:
-
+## General Configuration
 ### ldapServers
 A list of the LDAP servers to monitor, and their connection information.  An example is:
 ```yaml
@@ -37,9 +38,6 @@ ldapServers:
       userPassword: adminpassword
       startTls: false
       timeout: 5
-    chosenStatistics:
-      - current_connections
-      - search_operations
 ```
 Each entry will have the structure:
 - **database** _(optional)_: A human name for this LDAP database.  This
@@ -60,9 +58,6 @@ Each entry will have the structure:
     LDAP server before timing out.  A negative value causes the check
     to wait indefinitely.  A zero value effects a poll.
     __Default: -1__
-- **chosenStatistics** _(optional)_: a list of statistics names to
-  collect from this LDAP database.  If omitted, all defined statistics 
-  are collected.
 ### exporters
 This is a list of the ways to export data to a monitoring system.
 An example is:
@@ -120,6 +115,75 @@ and `syslog`.  The `stderr` handler will use a `StreamHandler` to
 output anything of `DEBUG` or lesser severity to standard error.  The
 `syslog` handler will use a `SysLogHandler` to output anything of 
 `WARNING` or lesser severity to the system log.
+
+## Metrics configuration
+This part of the configuration details the database objects to monitor.
+This structure is nestable, dynamic, and interpreted.
+- Nestable: The structure of this section is nestable.  That is, it can
+  repeat an arbitrary number of times.
+- Dynamic: The structure is dynamic in two ways.
+  - The configuration can react to the LDAP database structure.
+  - The configuration can react to the LDAP database values
+- Interpreted: The configuration can include Python code to be executed
+  at data retrieval time to update the values.
+
+```
+object:
+  database-object-name: database-object-definition
+  database-object-name: database-object-definition
+  ...
+database-object-name: database-object-name-string | "children"
+database-object-name-string: configuration-object-name
+database-object-definition:
+  rdn: regex-string
+  name: regex-string
+  object: object
+  metric: 
+    metric-definition-name: metric-definition
+    metric-definition-name: metric-definition
+    ...
+regex-string: "<string>"
+metric-definition-name: configuration-object-name
+metric-definition:
+  attribute: "<string>"
+  description: "<string>"
+  unit: unit-name
+configuration-object-name: "[A-Za-z0-9_]+"
+unit-name: "<string>"
+
+```
+
+### object
+`object` contains a number of named database object definitions.
+
+```yaml
+object:
+  name1:
+    [database object definition]
+  name2: ...
+  name3: ...
+```
+
+#### Object names
+Names may contain alphanumeric characters plus the underscore. A
+special database object name, `children`, will instruct the system to
+query the LDAP database for immediate children of the current DN and
+replace the `children` named database object definition with one copy
+of the database object definition per qualifying child.
+
+#### Object definitions
+
+
+
+### Database Object Definition
+A database object definition 
+
+
+
+
+
+
+
 
 ### Statistics
 This is a list of statistics that can be collected from an LDAP database,
