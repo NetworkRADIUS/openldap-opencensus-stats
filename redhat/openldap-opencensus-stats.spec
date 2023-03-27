@@ -31,7 +31,7 @@ mkdir -p $RPM_BUILD_ROOT/%{_libdir}/python3.6/site-packages/
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/
 mkdir -p $RPM_BUILD_ROOT/%{_unitdir}
 cp %{name}.py $RPM_BUILD_ROOT/%{_bindir}/%{name}
-cp -r ldapstats $RPM_BUILD_ROOT/%{_libdir}/python3.6/site-packages/
+cp -r %{name} $RPM_BUILD_ROOT/%{_libdir}/python3.6/site-packages/
 cp %{name}.yml $RPM_BUILD_ROOT/%{_sysconfdir}
 cp redhat/%{name}.service $RPM_BUILD_ROOT/%{_unitdir}
 cp redhat/%{name}.env $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/%{name}

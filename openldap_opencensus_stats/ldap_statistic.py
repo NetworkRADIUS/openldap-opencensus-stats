@@ -1,4 +1,4 @@
-# ldapstats
+# openldap_opencensus_stats
 # Copyright (C) 2023  NetworkRADIUS
 #
 # This program is free software: you can redistribute it and/or modify

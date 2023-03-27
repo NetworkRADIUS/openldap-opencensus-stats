@@ -1,6 +1,6 @@
 import re
 
-from ldapstats.config_transformers.base import ConfigurationTransformer
+from openldap_opencensus_stats.config_transformers.base import ConfigurationTransformer
 
 
 class SnakeCaseConfigurationTransformer(ConfigurationTransformer):

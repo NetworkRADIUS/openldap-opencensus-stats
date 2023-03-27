@@ -2,8 +2,8 @@ import copy
 import logging
 import re
 
-from ldapstats.config_transformers.base import ConfigurationTransformer
-from ldapstats.ldap_server import LdapServerPool
+from openldap_opencensus_stats.config_transformers.base import ConfigurationTransformer
+from openldap_opencensus_stats.ldap_server import LdapServerPool
 
 
 class MetricNameInterpolationConfigurationTransformer(ConfigurationTransformer):

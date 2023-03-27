@@ -1,7 +1,7 @@
 import logging
 import re
 
-from ldapstats.ldap_server import LdapServerPool
+from openldap_opencensus_stats.ldap_server import LdapServerPool
 
 
 class ConfigurationTransformer:

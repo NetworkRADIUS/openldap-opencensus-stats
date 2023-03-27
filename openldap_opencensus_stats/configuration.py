@@ -6,10 +6,10 @@ import re
 import yaml
 from time import sleep
 
-from ldapstats.config_transformers.base import ConfigurationTransformationChainSingleton
-from ldapstats.ldap_metric_set import MetricSet
-from ldapstats.ldap_server import LdapServerPool
-from ldapstats.ldap_statistic import LdapStatistic
+from openldap_opencensus_stats.config_transformers.base import ConfigurationTransformationChainSingleton
+from openldap_opencensus_stats.ldap_metric_set import MetricSet
+from openldap_opencensus_stats.ldap_server import LdapServerPool
+from openldap_opencensus_stats.ldap_statistic import LdapStatistic
 
 from opencensus.stats import stats
 from opencensus.tags import tag_key, tag_map, tag_value

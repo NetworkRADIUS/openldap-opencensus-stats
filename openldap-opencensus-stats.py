@@ -18,7 +18,7 @@
 
 import argparse
 from opencensus.stats import stats
-from ldapstats.configuration import Configuration
+from openldap_opencensus_stats.configuration import Configuration
 
 
 def parse_command_line():
