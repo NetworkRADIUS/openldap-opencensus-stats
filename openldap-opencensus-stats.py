@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# openldap-opencensus-stats
+# openldap-opencensus-stats.py
 # Copyright (C) 2023  NetworkRADIUS
 #
 # This program is free software: you can redistribute it and/or modify
