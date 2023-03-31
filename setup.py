@@ -5,9 +5,10 @@ import subprocess
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-VERSION = '0.0.4'
+VERSION = '0.0.6'
 DESCRIPTION = 'OpenLDAP OpenCensus Statistics'
 LONG_DESCRIPTION = 'A package to gather statistics for OpenLDAP and publish via OpenCensus.'
+
 
 class InstallService(install):
     def run(self):
@@ -53,7 +54,7 @@ setup(
         ]
     },
     cmdclass={'install': InstallService},
-    classifiers= [
+    classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: No Input/Output (Daemon)",
         "Intended Audience :: Information Technology",
@@ -65,4 +66,3 @@ setup(
         "Topic :: System :: Systems Administration :: Authentication/Directory :: LDAP",
     ]
 )
-

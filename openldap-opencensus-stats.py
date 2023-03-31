@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
-from opencensus.stats import stats
 from openldap_opencensus_stats.configuration import Configuration
 
 

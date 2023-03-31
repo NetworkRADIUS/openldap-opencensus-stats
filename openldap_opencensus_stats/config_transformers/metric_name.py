@@ -1,5 +1,3 @@
-import copy
-
 from openldap_opencensus_stats.config_transformers.base import ConfigurationTransformer
 
 

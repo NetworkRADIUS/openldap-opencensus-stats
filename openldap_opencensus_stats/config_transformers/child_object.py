@@ -4,7 +4,6 @@ import re
 
 import ldap
 
-from openldap_opencensus_stats.ldap_server import LdapServerPool
 from openldap_opencensus_stats.config_transformers.base import ConfigurationTransformer
 
 
