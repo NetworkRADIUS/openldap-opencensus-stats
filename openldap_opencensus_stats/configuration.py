@@ -1,7 +1,6 @@
 import copy
 import logging
 import logging.config
-import re
 
 import yaml
 from time import sleep
@@ -12,12 +11,11 @@ from openldap_opencensus_stats.ldap_server import LdapServerPool
 from openldap_opencensus_stats.ldap_statistic import LdapStatistic
 
 from opencensus.stats import stats
-from opencensus.tags import tag_key, tag_map, tag_value
 from opencensus.ext.prometheus import stats_exporter
 import opencensus.ext.stackdriver.stats_exporter
 
 # Make up for broken code in the Prometheus exporter
-from opencensus.stats import aggregation_data
+import opencensus.stats.aggregation_data
 opencensus.stats.aggregation_data.SumAggregationDataFloat = opencensus.stats.aggregation_data.SumAggregationData
 
 SUPPORTED_EXPORTERS = ['Prometheus', 'Stackdriver']
@@ -26,7 +24,7 @@ SUPPORTED_EXPORTERS = ['Prometheus', 'Stackdriver']
 class Configuration:
     def __init__(self, config_file_name):
         if config_file_name is None:
-            raise ValueError(f"Config file name must be supplied")
+            raise ValueError("Config file name must be supplied")
         self._config_file_name = config_file_name
         self._configuration_dict = {}
         self._sleep_time = 5

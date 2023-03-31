@@ -59,7 +59,7 @@ class LdapServer:
         if attr_list is None:
             attr_list = ['+']
         if dn is None:
-            logging.error(f"INTERNAL ERROR: Could not run a query because no DN was supplied")
+            logging.error("INTERNAL ERROR: Could not run a query because no DN was supplied")
             raise ValueError('Must specify a DN to query')
 
         try:

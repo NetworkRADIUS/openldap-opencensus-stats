@@ -76,9 +76,8 @@ class MetricNameInterpolationConfigurationTransformer(ConfigurationTransformer):
 
         name = config.get('computed_name', config.get('name', ''))
         name = re.sub(
-            '{([^\.}]+)\.([^}]+)}',
+            '{([^\\.}]+)\\.([^}]+)}',
             repl_func,
             name
         ).lower()
         return name
-
