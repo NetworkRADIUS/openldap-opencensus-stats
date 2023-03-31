@@ -1,33 +1,8 @@
-import os
-import shutil
-import subprocess
-
 from setuptools import setup, find_packages
-from setuptools.command.install import install
 
 VERSION = '0.0.6'
 DESCRIPTION = 'OpenLDAP OpenCensus Statistics'
 LONG_DESCRIPTION = 'A package to gather statistics for OpenLDAP and publish via OpenCensus.'
-
-
-class InstallService(install):
-    def run(self):
-        # Run the regular installation
-        install.run(self)
-
-        # Install the service as well
-        current_dir_path = os.path.dirname(os.path.realpath(__file__))
-        service_file_source = os.path.join(current_dir_path, 'redhat/openldap-opencensus-stats.service')
-        service_dest_path = os.path.join('/lib/systemd/system')
-        if os.path.exists(service_dest_path):
-            service_file_dest = '/lib/systemd/system/openldap_opencensus_stats.service'
-            shutil.copyfile(service_file_source,
-                            service_file_dest)
-            shutil.chown(service_file_dest, 'root', 'root')
-            subprocess.check_output(['systemctl', 'daemon-reload'])
-            subprocess.check_output(['systemctl', 'enable', 'openldap-opencensus-stats.service'])
-        else:
-            print("Systemd does not seem to exist on this system.")
 
 
 setup(
@@ -53,7 +28,6 @@ setup(
             'openldap_opencensus_stats = openldap_opencensus_stats.openldap_opencensus_stats:main'
         ]
     },
-    cmdclass={'install': InstallService},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: No Input/Output (Daemon)",
