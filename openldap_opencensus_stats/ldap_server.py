@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlparse
 
 import ldap
 
@@ -33,6 +34,7 @@ class LdapServer:
         self.database = database
         self.user_dn = user_dn
         self.user_password = user_password
+        self._sasl_uri_scheme = ('ldapi' == urlparse(server_uri).scheme)
 
         self.connect_to_ldap(
             server_uri=server_uri,
@@ -63,7 +65,10 @@ class LdapServer:
             raise ValueError('Must specify a DN to query')
 
         try:
-            self.connection.simple_bind_s(self.user_dn, self.user_password)
+            if self._sasl_uri_scheme:
+                self.connection.sasl_external_bind_s()
+            else:
+                self.connection.simple_bind_s(self.user_dn, self.user_password)
             return self.connection.search_s(dn, scope=scope, attrlist=attr_list)
         except (ldap.SERVER_DOWN, ldap.NO_SUCH_OBJECT, ldap.TIMEOUT):
             return []
