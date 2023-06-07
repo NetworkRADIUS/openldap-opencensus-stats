@@ -70,7 +70,9 @@ class LdapServer:
             else:
                 self.connection.simple_bind_s(self.user_dn, self.user_password)
             return self.connection.search_s(dn, scope=scope, attrlist=attr_list)
-        except (ldap.SERVER_DOWN, ldap.NO_SUCH_OBJECT, ldap.TIMEOUT):
+        except (ldap.SERVER_DOWN, ldap.NO_SUCH_OBJECT, ldap.TIMEOUT) as error:
+            logging.error('Could not query LDAP:')
+            logging.exception(error)
             return []
 
     def query_dn_and_attribute(self, dn, attribute):
