@@ -29,6 +29,7 @@ class Configuration:
         self._configuration_dict = {}
         self._sleep_time = 5
         self._metric_sets = []
+        self._ldap_metrics = {}
 
         self.reconfigure()
 
@@ -47,12 +48,11 @@ class Configuration:
             exporter = create_exporter(exporter_config)
             stats.stats.view_manager.register_exporter(exporter)
 
-        for ldap_server_config in normalized_configuration.get('ldap_servers'):
+        for ldap_server_config in normalized_configuration.get('ldap_servers', []):
             metric_set = self.generate_metric_set(ldap_server_config)
             self._metric_sets.append(metric_set)
 
-    @staticmethod
-    def generate_metric_set(ldap_server_config):
+    def generate_metric_set(self, ldap_server_config):
         args = copy.deepcopy(ldap_server_config.get('connection', {}))
         args['database'] = ldap_server_config.get('database')
         ldap_server = LdapServerPool().get_ldap_server(**args)
@@ -72,15 +72,19 @@ class Configuration:
                 value_function = config.get('func', 'value')
                 query_dn = config.get('query_dn')
                 if dn and name and attribute and unit and query_dn:
-                    stat = LdapStatistic(
-                        dn=dn,
-                        name=name,
-                        attribute=attribute,
-                        description=description,
-                        unit=unit,
-                        value_function=value_function,
-                        query_dn=query_dn,
-                    )
+                    stat = self._ldap_metrics.get(name)
+                    if not stat:
+                        stat = LdapStatistic(
+                            dn=dn,
+                            name=name,
+                            attribute=attribute,
+                            description=description,
+                            unit=unit,
+                            value_function=value_function,
+                            query_dn=query_dn,
+                            tag_keys=['database']
+                        )
+                        self._ldap_metrics[name] = stat
                     metric_set.add_statistic(stat)
                 for key, value in config.items():
                     configs.insert(0, value)
