@@ -7,6 +7,7 @@ from time import sleep
 
 from openldap_opencensus_stats.config_transformers.base import ConfigurationTransformationChainSingleton
 from openldap_opencensus_stats.ldap_metric_set import MetricSet
+from openldap_opencensus_stats.sync_metric_set import SyncMetricSet
 from openldap_opencensus_stats.ldap_server import LdapServerPool
 from openldap_opencensus_stats.ldap_statistic import LdapStatistic
 
@@ -51,6 +52,21 @@ class Configuration:
         for ldap_server_config in normalized_configuration.get('ldap_servers', []):
             metric_set = self.generate_metric_set(ldap_server_config)
             self._metric_sets.append(metric_set)
+
+        sync_sets = {}
+        for base_dn, ldap_server_names in normalized_configuration.get('sync', {}).items():
+            ldap_servers = [
+                LdapServerPool().get_ldap_server(**server)
+                for server in normalized_configuration.get('ldap_servers', [])
+                if server['database'] in ldap_server_names
+            ]
+            sync_metric_set = SyncMetricSet(
+                base_dn=base_dn,
+                ldap_servers=ldap_servers
+            )
+            self._metric_sets.append(sync_metric_set)
+
+
 
     def generate_metric_set(self, ldap_server_config):
         args = copy.deepcopy(ldap_server_config.get('connection', {}))
