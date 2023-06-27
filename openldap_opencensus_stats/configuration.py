@@ -65,7 +65,6 @@ class Configuration:
             )
             self._metric_sets.append(sync_metric_set)
 
-
     def generate_metric_set(self, ldap_server_config):
         args = copy.deepcopy(ldap_server_config.get('connection', {}))
         args['database'] = ldap_server_config.get('database')
