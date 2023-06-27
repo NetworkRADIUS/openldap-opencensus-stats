@@ -53,7 +53,6 @@ class Configuration:
             metric_set = self.generate_metric_set(ldap_server_config)
             self._metric_sets.append(metric_set)
 
-        sync_sets = {}
         for base_dn, ldap_server_names in normalized_configuration.get('sync', {}).items():
             ldap_servers = [
                 LdapServerPool().get_ldap_server(**server)
@@ -65,7 +64,6 @@ class Configuration:
                 ldap_servers=ldap_servers
             )
             self._metric_sets.append(sync_metric_set)
-
 
 
     def generate_metric_set(self, ldap_server_config):

@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from opencensus.stats import measure, view, aggregation, stats
+from opencensus.stats import stats
 from opencensus.tags import tag_map, tag_key, tag_value
 
 from openldap_opencensus_stats.ldap_sync_statistic import LdapSyncStatistic
@@ -42,11 +42,11 @@ class SyncMetricSet:
             )
 
     def collect(self):
-        ## Setup
+        # Setup
         #################################################
         mmap = stats.stats.stats_recorder.new_measurement_map()
 
-        ## Main Processing
+        # Main Processing
         #################################################
         watermarks = {}
         for ldap_server in self._statistics.keys():
@@ -59,7 +59,7 @@ class SyncMetricSet:
             watermarks[ldap_server.database] = datetime.strptime(
                 segments[0],
                 '%Y%m%d%H%M%S.%fZ'
-            ) # Record the timestamp
+            )  # Record the timestamp
 
         high_water_mark = max(watermarks.values())
         for ldap_server, stat in self._statistics.items():

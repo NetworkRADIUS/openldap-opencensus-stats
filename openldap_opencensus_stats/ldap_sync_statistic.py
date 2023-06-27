@@ -74,4 +74,3 @@ class LdapSyncStatistic:
 
         logging.debug(f"Collected ldap_value for {self.display_name(ldap_server)}: {offset}")
         measurement_map.measure_float_put(self.measure, offset)
-
