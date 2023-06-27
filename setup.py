@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.7'
+VERSION = '0.0.8'
 DESCRIPTION = 'OpenLDAP OpenCensus Statistics'
 LONG_DESCRIPTION = 'A package to gather statistics for OpenLDAP and publish via OpenCensus.'
 
@@ -28,6 +28,7 @@ setup(
             'openldap_opencensus_stats = openldap_opencensus_stats.openldap_opencensus_stats:main'
         ]
     },
+    scripts=['openldap-opencensus-stats.py'],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: No Input/Output (Daemon)",
