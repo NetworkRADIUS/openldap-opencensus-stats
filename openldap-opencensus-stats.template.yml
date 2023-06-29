@@ -1,22 +1,18 @@
 ldapServers:
-  - database: localhost
+  - database: ldap1
     connection:
-      # Connection details for the Bitnami OpenLDAP docker image
-      serverUri: ldap://localhost:1389/
-      userDn: CN=admin,DC=example,DC=org
-      userPassword: adminpassword
-      startTls: false
-      timeout: 5
-#    chosenStatistics:
-#      - operations/bind/initiated
-#      - operations/bind/completed
-  - database: forumsys
-    connection:
-      serverUri: ldap://ldap.forumsys.com
-      userDn: cn=read-only-admin,dc=example,dc=com
+      serverUri: ldap://ldap1.example.org/
+      userDn: cn=admin,dc=example,dc=org
       userPassword: password
       startTls: false
-      timeout: -1
+      timeout: 5
+  - database: ldap2
+    connection:
+      serverUri: ldap://ldap2.example.org/
+      userDn: cn=admin,dc=example,dc=org
+      userPassword: password
+      startTls: false
+      timeout: 5
 exporters:
   -
     name: Prometheus
@@ -27,6 +23,10 @@ exporters:
   -
     name: Stackdriver
     options:
+sync:
+  dc=example,dc=org:
+    - ldap1
+    - ldap2
 logConfig:
   root:
     level: DEBUG
