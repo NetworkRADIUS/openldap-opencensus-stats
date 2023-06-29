@@ -27,7 +27,7 @@ def parse_command_line():
     return parser.parse_args()
 
 
-def main():
+def monitor():
     args = parse_command_line()
     configuration = Configuration(args.config_file)
     while True:
@@ -38,4 +38,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    monitor()

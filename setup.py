@@ -25,10 +25,12 @@ setup(
     keywords='openldap opencensus metrics',
     entry_points={
         'console_scripts': [
-            'openldap_opencensus_stats = openldap_opencensus_stats.openldap_opencensus_stats:main'
+            'openldap_opencensus_stats = openldap_opencensus_stats.main:monitor'
         ]
     },
-    scripts=['openldap-opencensus-stats.py'],
+    data_files=[
+        ('etc', ['openldap-opencensus-stats.yml']),
+    ],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: No Input/Output (Daemon)",
