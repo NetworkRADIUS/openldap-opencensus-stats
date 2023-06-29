@@ -35,7 +35,7 @@ class ConfigurationTransformationChainSingleton:
 
     def register(self, cls):
         self.transformation_chain.append(cls)
-        logging.critical(f"Registered transformer: {cls.__name__}")
+        logging.info(f"Registered transformer: {cls.__name__}")
 
     def transform_configuration(self, configuration):
         configuration_result = {}
