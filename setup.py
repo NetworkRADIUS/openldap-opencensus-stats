@@ -29,7 +29,7 @@ setup(
         ]
     },
     data_files=[
-        ('etc', ['openldap-opencensus-stats.yml']),
+        ('etc', ['openldap-opencensus-stats.template.yml']),
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
