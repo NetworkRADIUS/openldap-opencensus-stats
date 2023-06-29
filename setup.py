@@ -23,11 +23,6 @@ setup(
         'pyyaml',
     ],
     keywords='openldap opencensus metrics',
-    entry_points={
-        'console_scripts': [
-            'openldap_opencensus_stats = openldap_opencensus_stats.openldap_opencensus_stats:main'
-        ]
-    },
     scripts=['openldap-opencensus-stats.py'],
     classifiers=[
         "Development Status :: 3 - Alpha",

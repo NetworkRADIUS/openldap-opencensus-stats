@@ -1,6 +1,6 @@
 %global _python_bytecompile_extra 0
 
-Name:           openldap-opencensus-stats
+Name:           openldap-opencensus-stats.py
 Version:        1.0.0
 Release:        1%{?dist}
 Summary:        Export OpenLDAP cn=Monitoring statistics via OpenCensus

@@ -8,7 +8,7 @@ Type=simple
 Restart=always
 RestartSec=1
 EnvironmentFile=-/etc/sysconfig/openldap-opencensus-stats
-ExecStart=/usr/bin/openldap-opencensus-stats /etc/openldap-opencensus-stats.yml
+ExecStart=/usr/bin/openldap-opencensus-stats.py /etc/openldap-opencensus-stats.yml
 
 [Install]
 WantedBy=multi-user.target
