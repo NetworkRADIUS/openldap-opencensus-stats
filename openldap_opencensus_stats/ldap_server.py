@@ -29,6 +29,7 @@ class LdapServer:
                  ca_file=None,
                  cert_file=None,
                  key_file=None,
+                 sasl_mech=None,
                  timeout=-1):
         if database is None:
             database = server_uri
@@ -37,7 +38,7 @@ class LdapServer:
         self.database = database
         self.user_dn = user_dn
         self.user_password = user_password
-        self._sasl_uri_scheme = ('ldapi' == urlparse(server_uri).scheme)
+        self.sasl_mech = sasl_mech
 
         self.connect_to_ldap(
             server_uri=server_uri,
@@ -82,8 +83,12 @@ class LdapServer:
             raise ValueError('Must specify a DN to query')
 
         try:
-            if self._sasl_uri_scheme:
-                self.connection.sasl_external_bind_s()
+            if self.sasl_mech:
+                if self.sasl_mech == 'EXTERNAL':
+                    self.connection.sasl_external_bind_s()
+                else:
+                    logging.error(f"INTERNAL ERROR: Unsupported SASL mechanism {self.sasl_mech}")
+                    raise ValueError(f"Unsupported SASL mechanism {self.sasl_mech}")
             else:
                 self.connection.simple_bind_s(self.user_dn, self.user_password)
             return self.connection.search_s(dn, scope=scope, attrlist=attr_list)

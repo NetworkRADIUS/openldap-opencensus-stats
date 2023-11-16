@@ -63,6 +63,9 @@ Each entry will have the structure:
   - **keyFile** _(optional)_: Full path to the private key for X509
     authentication.
     __Default: blank__
+  - **saslMech** _(optional)_: SASL mechanism to use.  Only EXTERNAL is
+    currently supported.
+    __Default: blank__
   - **timeout** _(optional)_:  Seconds to wait for a response from this
     LDAP server before timing out.  A negative value causes the check
     to wait indefinitely.  A zero value effects a poll.
