@@ -16,11 +16,12 @@ class ChildObjectConfigurationTransformer(ConfigurationTransformer):
         config = copy.deepcopy(configuration)
         for server_config in config.get('ldap_servers'):
             ldap_server = ChildObjectConfigurationTransformer.get_ldap_server(server_config)
-            server_config['object'] = ChildObjectConfigurationTransformer.process_objects_for_ldap_server(
-                configuration=server_config.get('object', {}),
-                dn='',
-                ldap_server=ldap_server
-            )
+            if not ldap_server.get('sync_only', False):
+                server_config['object'] = ChildObjectConfigurationTransformer.process_objects_for_ldap_server(
+                    configuration=server_config.get('object', {}),
+                    dn='',
+                    ldap_server=ldap_server
+                )
 
         return config
 

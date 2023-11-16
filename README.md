@@ -38,6 +38,7 @@ ldapServers:
       userPassword: adminpassword
       startTls: false
       timeout: 5
+    syncOnly: False
 ```
 Each entry will have the structure:
 - **database** _(optional)_: A human name for this LDAP database.  This
@@ -70,6 +71,8 @@ Each entry will have the structure:
     LDAP server before timing out.  A negative value causes the check
     to wait indefinitely.  A zero value effects a poll.
     __Default: -1__
+- **syncOnly** _(optional)_: Set to True if this server definition is
+  only present for evaluating replication delays
 ### exporters
 This is a list of the ways to export data to a monitoring system.
 An example is:

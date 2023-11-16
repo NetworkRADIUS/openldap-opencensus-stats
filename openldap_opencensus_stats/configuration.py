@@ -50,8 +50,9 @@ class Configuration:
             stats.stats.view_manager.register_exporter(exporter)
 
         for ldap_server_config in normalized_configuration.get('ldap_servers', []):
-            metric_set = self.generate_metric_set(ldap_server_config)
-            self._metric_sets.append(metric_set)
+            if not ldap_server_config.get('sync_only', False):
+                metric_set = self.generate_metric_set(ldap_server_config)
+                self._metric_sets.append(metric_set)
 
         for base_dn, ldap_server_names in normalized_configuration.get('sync', {}).items():
             ldap_servers = [
