@@ -54,6 +54,15 @@ Each entry will have the structure:
   - **startTls** _(optional)_:  Whether to StartTLS on an `ldap://`
     connection.  Takes a boolean value, such as "y", "Yes", true,
     False, 1, or 0.  __Default: false__
+  - **caFile** _(optional)_: Full path to a file containing one or more
+    CA certificates to use when verifying the LDAP server certificate.
+    __Default: blank__
+  - **certFile** _(optional)_: Full path to a file containing a client
+    certificate to use in X509 authentication.
+    __Default: blank__
+  - **keyFile** _(optional)_: Full path to the private key for X509
+    authentication.
+    __Default: blank__
   - **timeout** _(optional)_:  Seconds to wait for a response from this
     LDAP server before timing out.  A negative value causes the check
     to wait indefinitely.  A zero value effects a poll.

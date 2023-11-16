@@ -26,6 +26,9 @@ class LdapServer:
                  user_password=None,
                  database=None,
                  start_tls=False,
+                 ca_file=None,
+                 cert_file=None,
+                 key_file=None,
                  timeout=-1):
         if database is None:
             database = server_uri
@@ -39,16 +42,30 @@ class LdapServer:
         self.connect_to_ldap(
             server_uri=server_uri,
             start_tls=start_tls,
+            ca_file=ca_file,
+            cert_file=cert_file,
+            key_file=key_file,
             timeout=timeout
         )
 
-    def connect_to_ldap(self, server_uri, start_tls=False, timeout=-1):
+    def connect_to_ldap(self, server_uri, start_tls=False, ca_file=None, cert_file=None, key_file=None, timeout=-1):
         if server_uri is None:
             logging.error(f"Failing to configure LDAP server {self.database} because no URI was supplied.")
             raise ValueError(f"An LDAP server URI must be defined for {self.database}")
 
         self.connection = ldap.ldapobject.ReconnectLDAPObject(server_uri)
         self.connection.timeout = timeout
+
+        if ca_file:
+            self.connection.set_option(ldap.OPT_X_TLS_CACERTFILE, ca_file)
+        if cert_file:
+            if not key_file:
+                logging.error(f"Certificate file specified, but no key file specified for {self.database}")
+                raise ValueError(f"Certificate file specified, but no key file specified for {self.database}")
+            self.connection.set_option(ldap.OPT_X_TLS_CERTFILE, cert_file)
+            self.connection.set_option(ldap>OPT_X_TLS_KEYFILE, key_file)
+        if ca_file or cert_file:
+            self.connection.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 
         if start_tls:
             logging.info(f"Using StartTLS for {self.database}")
