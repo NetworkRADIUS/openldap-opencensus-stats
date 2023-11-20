@@ -97,7 +97,7 @@ class LdapServer:
             return []
 
     def query_dn_and_attribute(self, dn, attribute):
-        results = self.query(dn, scope=ldap.SCOPE_BASE)
+        results = self.query(dn, scope=ldap.SCOPE_BASE, attr_list=[attribute])
         if not results:
             return None
 
