@@ -64,7 +64,7 @@ class LdapServer:
                 logging.error(f"Certificate file specified, but no key file specified for {self.database}")
                 raise ValueError(f"Certificate file specified, but no key file specified for {self.database}")
             self.connection.set_option(ldap.OPT_X_TLS_CERTFILE, cert_file)
-            self.connection.set_option(ldap>OPT_X_TLS_KEYFILE, key_file)
+            self.connection.set_option(ldap.OPT_X_TLS_KEYFILE, key_file)
         if ca_file or cert_file:
             self.connection.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
 
