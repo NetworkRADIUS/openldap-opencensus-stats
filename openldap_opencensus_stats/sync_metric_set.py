@@ -54,22 +54,24 @@ class SyncMetricSet:
                 dn=self._base_dn,
                 attribute=self.timestamp_attribute
             )
-            result_str = result[0].decode('utf-8')
-            segments = result_str.split('#')
-            watermarks[ldap_server.database] = datetime.strptime(
-                segments[0],
-                '%Y%m%d%H%M%S.%fZ'
-            )  # Record the timestamp
+            if (result and result[0]):
+                result_str = result[0].decode('utf-8')
+                segments = result_str.split('#')
+                watermarks[ldap_server.database] = datetime.strptime(
+                    segments[0],
+                    '%Y%m%d%H%M%S.%fZ'
+                )  # Record the timestamp
 
         high_water_mark = max(watermarks.values())
         for ldap_server, stat in self._statistics.items():
-            this_watermark = watermarks[ldap_server.database]
-            offset = (high_water_mark - this_watermark).total_seconds()
-            stat.collect(
-                ldap_server=ldap_server,
-                measurement_map=mmap,
-                offset=offset
-            )
+            if (ldap_server.database in watermarks):
+                this_watermark = watermarks[ldap_server.database]
+                offset = (high_water_mark - this_watermark).total_seconds()
+                stat.collect(
+                    ldap_server=ldap_server,
+                    measurement_map=mmap,
+                    offset=offset
+                )
         # Record/Publish the data
         tmap = tag_map.TagMap()
         tmap.insert(
