@@ -15,8 +15,8 @@ class ChildObjectConfigurationTransformer(ConfigurationTransformer):
 
         config = copy.deepcopy(configuration)
         for server_config in config.get('ldap_servers'):
-            ldap_server = ChildObjectConfigurationTransformer.get_ldap_server(server_config)
-            if not ldap_server.get('sync_only', False):
+            if not server_config.get('sync_only', False):
+                ldap_server = ChildObjectConfigurationTransformer.get_ldap_server(server_config)
                 server_config['object'] = ChildObjectConfigurationTransformer.process_objects_for_ldap_server(
                     configuration=server_config.get('object', {}),
                     dn='',
