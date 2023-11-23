@@ -38,7 +38,8 @@ class SyncMetricSet:
         for ldap_server in ldap_servers:
             self._statistics[ldap_server] = LdapSyncStatistic(
                 name=f'sync/{ldap_server.database}/offset',
-                description='Offset in seconds from the most recent update'
+                description='Offset in seconds from the most recent update',
+                unit='s'
             )
 
     def collect(self):
