@@ -25,8 +25,12 @@ exporters:
     options:
 sync:
   dc=example,dc=org:
-    - ldap1
-    - ldap2
+    clusterServers:
+      - ldap1
+      - ldap2
+    reportServers:
+      - ldap1
+      - ldap2
 logConfig:
   root:
     level: DEBUG
