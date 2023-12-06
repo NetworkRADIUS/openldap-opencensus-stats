@@ -29,10 +29,12 @@ class LdapSyncStatistic:
                  name=None,
                  description='Undescribed',
                  unit='ms',
-                 tag_keys=None):
+                 tag_keys=None,
+                 report=False):
         if name is None:
             self.log_and_raise('Statistics definition must include a name for the statistic')
         self.name = name
+        self.report = report
         tag_keys = tag_keys or ['BaseDN']
 
         self.measure = self.generate_measure(description, name, unit)

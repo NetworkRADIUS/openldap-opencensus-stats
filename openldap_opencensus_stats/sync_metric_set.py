@@ -24,22 +24,28 @@ class SyncMetricSet:
     """
     def __init__(self,
                  base_dn=None,
-                 ldap_servers=None):
+                 ldap_servers=None,
+                 report_servers=None):
         if not base_dn:
             logging.error('INTERNAL: Sync metric set created without the base DN')
             raise ValueError('INTERNAL: Sync metric set created without the base DN')
         self._base_dn = base_dn
         if not ldap_servers:
-            logging.error('INTERNAL: Sync metric set created without any LDAP servers')
-            raise ValueError('INTERNAL: Sync metric set created without any LDAP servers')
+            logging.error('INTERNAL: Sync metric set created without any cluster LDAP servers')
+            raise ValueError('INTERNAL: Sync metric set created without any cluster LDAP servers')
+        if not report_servers:
+            logging.error('INTERNAL: Sync metric set created without any reporting LDAP servers')
+            raise ValueError('INTERNAL: Sync metric set created without any reporting LDAP servers')
         self.timestamp_attribute = 'contextCSN'
 
         self._statistics = {}
         for ldap_server in ldap_servers:
+            report = ldap_server.database in report_servers
             self._statistics[ldap_server] = LdapSyncStatistic(
                 name=f'sync/{ldap_server.database}/offset',
                 description='Offset in seconds from the most recent update',
-                unit='s'
+                unit='s',
+                report=report
             )
 
     def collect(self):
@@ -65,7 +71,7 @@ class SyncMetricSet:
 
         high_water_mark = max(watermarks.values())
         for ldap_server, stat in self._statistics.items():
-            if (ldap_server.database in watermarks):
+            if (ldap_server.database in watermarks) and (stat.report):
                 this_watermark = watermarks[ldap_server.database]
                 offset = (high_water_mark - this_watermark).total_seconds()
                 stat.collect(

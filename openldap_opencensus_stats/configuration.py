@@ -54,15 +54,18 @@ class Configuration:
                 metric_set = self.generate_metric_set(ldap_server_config)
                 self._metric_sets.append(metric_set)
 
-        for base_dn, ldap_server_names in normalized_configuration.get('sync', {}).items():
+        for base_dn, sync_config in normalized_configuration.get('sync', {}).items():
+            ldap_server_names = sync_config.get('cluster_servers', [])
             ldap_servers = [
                 LdapServerPool().get_ldap_server(**server)
                 for server in normalized_configuration.get('ldap_servers', [])
                 if server['database'] in ldap_server_names
             ]
+            report_servers = sync_config.get('report_servers', [])
             sync_metric_set = SyncMetricSet(
                 base_dn=base_dn,
-                ldap_servers=ldap_servers
+                ldap_servers=ldap_servers,
+                report_servers=report_servers
             )
             self._metric_sets.append(sync_metric_set)
 
