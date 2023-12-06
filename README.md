@@ -14,17 +14,22 @@ monitoring software, such as GCP.
 
 ### Installation commands
 ```bash
-pip3 install -r requirements.txt
+sudo pip3 install openldap-opencensus-stats
 ```
 
 ### Configuration
-A sample configuration file is provided in ldap_metrics.yml.  The
-configuration is YAML data, with the following structure:
+A sample configuration file is provided in openldap-opencensus-stats.template.yml.  The
+configuration is YAML data, with the structure described below.
+
+This should be copied to `/etc/openldap-opencensus-stats.yml` and amended to suit the
+system requirements.
 
 ## Running
 ```bash
-python3 ./ldap_metrics.py ./ldap_metrics.yml
+/usr/local/bin/openldap_opencensus_stats /etc/openldap-opencensus-stats.yml
 ```
+
+A sample systemd service definition is provided in the `redhat` directory.
 
 ## General Configuration
 ### ldapServers
