@@ -227,6 +227,40 @@ Each entry will have the structure:
   Commonly this will be `1`, `By` (Bytes), or `s` (seconds).
   __Default: 1__
 
+
+### sync
+Configuration for the monitoring of replication delay in a replicated LDAP cluster
+An example is:
+```yaml
+sync:
+  dc=example,dc=com:
+    clusterServers:
+      - database1
+      - database2
+      - database3
+    reportServers:
+      - database1
+```
+Each entry in the dictionary, specifies the base DN of the database in a given cluster.
+Under that:
+- **clusterServers** _(required)_: Specifies the LDAP servers which make up the cluster.
+  These must be values found in the `database` field in `ldapServers`.
+- **reportServers** _(requred)_: Specifies which of LDAP servers replication offset
+  will be reported for.
+
+When processing replication offset, the `contextCSN` of the base DN is queried on all
+the LDAP servers in the cluster.  The maximum timestamp found is taken as the current
+database timestamp.
+
+For each of the servers listed in `reportServers`, the offset from that timestamp is
+reported.
+
+This allows for two scenarios:
+
+- a central reporting server which queries all hosts in a cluster and reports on all of them.
+- distributed reporting, where, for example, each replica queries the masters and itself
+  and reports only its own offset.
+
 ## Credits
 Copyright 2023, NetworkRADIUS 
 This utility was written by Mark Donnelly, mark - at - painless-securtiy - dot - com.
