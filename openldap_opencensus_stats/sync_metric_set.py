@@ -18,6 +18,7 @@ class SyncMetricSet:
     will:
     * Have a name of 'sync/{servername}/offset'
     * Have a BaseDN tag of 'dn=example,dn=org'
+    * Have a rid tag with the rid of the provider.
     * Have floating point values representing the number of seconds
       that the latest timestamp of their tree differs from the
       timestamp of the most recent change among the entire cluster
@@ -49,10 +50,6 @@ class SyncMetricSet:
             )
 
     def collect(self):
-        # Setup
-        #################################################
-        mmap = stats.stats.stats_recorder.new_measurement_map()
-
         # Main Processing
         #################################################
         watermarks = {}
@@ -61,28 +58,42 @@ class SyncMetricSet:
                 dn=self._base_dn,
                 attribute=self.timestamp_attribute
             )
-            if (result and result[0]):
-                result_str = result[0].decode('utf-8')
-                segments = result_str.split('#')
-                watermarks[ldap_server.database] = datetime.strptime(
-                    segments[0],
-                    '%Y%m%d%H%M%S.%fZ'
-                )  # Record the timestamp
+            if (result):
+                # Record the timestamp from each contextCSN returned
+                for value in result:
+                    result_str = value.decode('utf-8')
+                    segments = result_str.split('#')
+                    rid = str(int(segments[2], 16))  # The rid is the third segment, in hex
+                    if (rid in watermarks):
+                        watermarks[rid].update({ldap_server.database: datetime.strptime(
+                            segments[0], '%Y%m%d%H%M%S.%fZ'
+                        )})
+                    else:
+                        watermarks[rid] = {ldap_server.database: datetime.strptime(
+                            segments[0], '%Y%m%d%H%M%S.%fZ'
+                        )}
 
-        high_water_mark = max(watermarks.values())
-        for ldap_server, stat in self._statistics.items():
-            if (ldap_server.database in watermarks) and (stat.report):
-                this_watermark = watermarks[ldap_server.database]
-                offset = (high_water_mark - this_watermark).total_seconds()
-                stat.collect(
-                    ldap_server=ldap_server,
-                    measurement_map=mmap,
-                    offset=offset
-                )
-        # Record/Publish the data
-        tmap = tag_map.TagMap()
-        tmap.insert(
-            tag_key.TagKey('BaseDN'),
-            tag_value.TagValue(self._base_dn)
-        )
-        mmap.record(tmap)
+        for rid in watermarks.keys():
+            mmap = stats.stats.stats_recorder.new_measurement_map()
+
+            high_water_mark = max(watermarks[rid].values())
+            for ldap_server, stat in self._statistics.items():
+                if (ldap_server.database in watermarks[rid]) and (stat.report):
+                    this_watermark = watermarks[rid][ldap_server.database]
+                    offset = (high_water_mark - this_watermark).total_seconds()
+                    stat.collect(
+                        ldap_server=ldap_server,
+                        measurement_map=mmap,
+                        offset=offset
+                    )
+            # Record/Publish the data
+            tmap = tag_map.TagMap()
+            tmap.insert(
+                tag_key.TagKey('BaseDN'),
+                tag_value.TagValue(self._base_dn)
+            )
+            tmap.insert(
+                tag_key.TagKey('rid'),
+                tag_value.TagValue(rid)
+            )
+            mmap.record(tmap)

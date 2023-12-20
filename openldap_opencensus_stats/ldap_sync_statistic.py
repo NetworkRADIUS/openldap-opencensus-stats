@@ -35,7 +35,7 @@ class LdapSyncStatistic:
             self.log_and_raise('Statistics definition must include a name for the statistic')
         self.name = name
         self.report = report
-        tag_keys = tag_keys or ['BaseDN']
+        tag_keys = tag_keys or ['BaseDN', 'rid']
 
         self.measure = self.generate_measure(description, name, unit)
         self.view = self.generate_view(description, name, tag_keys, self.measure)
