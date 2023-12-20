@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.14'
+VERSION = '0.0.15'
 DESCRIPTION = 'OpenLDAP OpenCensus Statistics'
 LONG_DESCRIPTION = 'A package to gather statistics for OpenLDAP and publish via OpenCensus.'
 
