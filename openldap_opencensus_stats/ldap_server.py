@@ -34,6 +34,7 @@ class LdapServer:
             database = server_uri
 
         self.connection = None
+        self.bound = False
         self.database = database
         self.user_dn = user_dn
         self.user_password = user_password
@@ -82,16 +83,19 @@ class LdapServer:
             raise ValueError('Must specify a DN to query')
 
         try:
-            if self.sasl_mech:
-                if self.sasl_mech == 'EXTERNAL':
-                    self.connection.sasl_external_bind_s()
+            if not self.bound:
+                if self.sasl_mech:
+                    if self.sasl_mech == 'EXTERNAL':
+                        self.connection.sasl_external_bind_s()
+                    else:
+                        logging.error(f"INTERNAL ERROR: Unsupported SASL mechanism {self.sasl_mech}")
+                        raise ValueError(f"Unsupported SASL mechanism {self.sasl_mech}")
                 else:
-                    logging.error(f"INTERNAL ERROR: Unsupported SASL mechanism {self.sasl_mech}")
-                    raise ValueError(f"Unsupported SASL mechanism {self.sasl_mech}")
-            else:
-                self.connection.simple_bind_s(self.user_dn, self.user_password)
+                    self.connection.simple_bind_s(self.user_dn, self.user_password)
+                self.bound = True
             return self.connection.search_s(dn, scope=scope, attrlist=attr_list)
         except (ldap.SERVER_DOWN, ldap.NO_SUCH_OBJECT, ldap.TIMEOUT) as error:
+            self.bound = False
             logging.error('Could not query LDAP:')
             logging.exception(error)
             return []
